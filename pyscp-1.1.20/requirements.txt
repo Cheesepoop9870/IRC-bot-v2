@@ -1,0 +1,6 @@
+arrow
+beautifulsoup4
+blessings
+lxml
+requests
+peewee
