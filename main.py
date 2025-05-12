@@ -44,11 +44,25 @@ def handle_command(command, args, handle, sender):
             handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
     elif command == "!roll":
-        args = args.split("d")
-        for x in range(0, int(args[0])):
-            output.append(random.randint(1, int(args[1])))
-        handle.write(f'PRIVMSG {channel} :{sender} rolled {args[0]}d{args[1]}:{str(output).strip("[]")} Total: {sum(output)}\r\n')
-        handle.flush()
+        if len(args) == 1:
+            dice_args = args[0].split("d")
+            if len(dice_args) == 2:
+                try:
+                    num_dice = int(dice_args[0])
+                    dice_size = int(dice_args[1])
+                    for x in range(num_dice):
+                        output.append(random.randint(1, dice_size))
+                    handle.write(f'PRIVMSG {channel} :{sender} rolled {num_dice}d{dice_size}: {str(output).strip("[]")} Total: {sum(output)}\r\n')
+                    handle.flush()
+                except ValueError:
+                    handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
+                    handle.flush()
+            else:
+                handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
+                handle.flush()
+        else:
+            handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
+            handle.flush()
 try:
     # Create socket and wrap with SSL
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
