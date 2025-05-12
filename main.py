@@ -7,8 +7,10 @@ channel = '#cheesepoop9870'
 nick = 'CheeseBot-v1'
 port = 6697
 
+
+
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870'} # Add admin usernames here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_"} # Add admin usernames here
 
 def handle_command(command, args, handle, sender):
     #Handle IRC commands starting with !
@@ -19,7 +21,7 @@ def handle_command(command, args, handle, sender):
         if sender in ADMIN_USERS:
             handle.write('QUIT :\r\n')
             handle.flush()
-            return True
+            
         else:
             handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
@@ -33,7 +35,7 @@ try:
 
     print('NICK', nick, file=handle)
     print('USER', nick, nick, nick, ':'+nick, file=handle)
-
+    
     joined = False
     while True:
         line = handle.readline().strip()
