@@ -1,6 +1,8 @@
 
 import socket
 import ssl
+import time
+import random
 
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
@@ -9,11 +11,11 @@ realname = 'v1'  # This will be displayed in WHOIS
 port = 6697
 
 
-
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_"} # Add admin usernames here
 
 def handle_command(command, args, handle, sender):
+    output = []
     #Handle IRC commands starting with !
     if command == "hello":
         handle.write(f'PRIVMSG {channel} :Hello!\r\n')
@@ -28,6 +30,25 @@ def handle_command(command, args, handle, sender):
     elif command == "clear":
         handle.write(f'PRIVMSG {channel} :Message history cleared!\r\n')
         handle.flush()
+    elif command == "!help":
+        handle.write(f'PRIVMSG {channel} :Available commands: !hello, !quit, !clear, !help\r\n')
+        handle.flush()
+    elif command == "setup":
+        if sender in ADMIN_USERS:
+            handle.write(f'PRIVMSG {channel} :Setting up the bot...\r\n')
+            handle.write(f'MODE {nick} :+B\r\n')
+            time.sleep(1)
+            handle.write(f"PRIVMSG {channel} :Bot setup complete!\r\n")
+            handle.flush()
+        else:
+            handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
+            handle.flush()
+    elif command == "!roll":
+        args = args.split("d")
+        for x in range(0, int(args[0])):
+            output.append(random.randint(1, int(args[1])))
+        handle.write(f'PRIVMSG {channel} :{sender} rolled {args[0]}d{args[1]}:{str(output).strip("[]")} Total: {sum(output)}\r\n')
+        handle.flush()
 try:
     # Create socket and wrap with SSL
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,6 +59,7 @@ try:
 
     print('NICK', nick, file=handle)
     print('USER', nick, nick, nick, ':'+realname, file=handle)
+    
     
     joined = False
     while True:
@@ -74,7 +96,7 @@ try:
 
 except Exception as e:
     print(f"Error: {e}")
-    break
+    # break
 finally:
     try:
         ircsock.close()
