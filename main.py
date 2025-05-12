@@ -1,3 +1,4 @@
+
 import socket
 import ssl
 
@@ -9,9 +10,11 @@ port = 6697
 def handle_command(command, args, handle):
     #Handle IRC commands starting with !
     if command == "hello":
-        print('PRIVMSG', channel, ':Hello!', file=handle)
+        handle.write(f'PRIVMSG {channel} :Hello!\r\n')
+        handle.flush()
     elif command == "help":
-        print('PRIVMSG', channel, ':Available commands: !hello, !help', file=handle)
+        handle.write(f'PRIVMSG {channel} :Available commands: !hello, !help\r\n')
+        handle.flush()
 
 try:
     # Create socket and wrap with SSL
@@ -24,12 +27,21 @@ try:
     print('NICK', nick, file=handle)
     print('USER', nick, nick, nick, ':'+nick, file=handle)
 
-    for line in handle:
-        line = line.strip()
+    joined = False
+    while True:
+        line = handle.readline().strip()
         print(line)
 
         if "PING" in line:
-            print("PONG :" + line.split(':')[1], file=handle)
+            pong = "PONG :" + line.split(':')[1]
+            handle.write(pong + '\r\n')
+            handle.flush()
+            
+            # Join channel after first PING (server ready)
+            if not joined:
+                handle.write(f'JOIN {channel}\r\n')
+                handle.flush()
+                joined = True
             continue
 
         # Check for PRIVMSG (chat messages)
@@ -44,8 +56,6 @@ try:
 
                 # Handle the command
                 handle_command(command, args, handle)
-
-        print('JOIN', channel, file=handle)
 
 except Exception as e:
     print(f"Error: {e}")
