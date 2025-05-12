@@ -7,15 +7,22 @@ channel = '#cheesepoop9870'
 nick = 'CheeseBot-v1'
 port = 6697
 
-def handle_command(command, args, handle):
+# List of admin usernames who can use privileged commands
+ADMIN_USERS = {'cheesepoop9870'} # Add admin usernames here
+
+def handle_command(command, args, handle, sender):
     #Handle IRC commands starting with !
     if command == "hello":
         handle.write(f'PRIVMSG {channel} :Hello!\r\n')
         handle.flush()
     elif command == "quit":
-        handle.write('QUIT :\r\n')
-        handle.flush()
-        break
+        if sender in ADMIN_USERS:
+            handle.write('QUIT :\r\n')
+            handle.flush()
+            return True
+        else:
+            handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
+            handle.flush()
 try:
     # Create socket and wrap with SSL
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,6 +53,8 @@ try:
 
         # Check for PRIVMSG (chat messages)
         if "PRIVMSG" in line and ':!' in line:
+            # Extract the sender's nickname
+            sender = line.split('!')[0][1:]
             # Extract the command part
             msg_parts = line.split(':!')
             if len(msg_parts) > 1:
@@ -55,7 +64,8 @@ try:
                 args = cmd_parts[1:] if len(cmd_parts) > 1 else []
 
                 # Handle the command
-                handle_command(command, args, handle)
+                if handle_command(command, args, handle, sender):
+                    break
 
 except Exception as e:
     print(f"Error: {e}")
