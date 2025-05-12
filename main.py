@@ -12,10 +12,10 @@ def handle_command(command, args, handle):
     if command == "hello":
         handle.write(f'PRIVMSG {channel} :Hello!\r\n')
         handle.flush()
-    elif command == "help":
-        handle.write(f'PRIVMSG {channel} :Available commands: !hello, !help\r\n')
+    elif command == "quit":
+        handle.write('QUIT :\r\n')
         handle.flush()
-
+        break
 try:
     # Create socket and wrap with SSL
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
