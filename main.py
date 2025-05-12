@@ -4,8 +4,8 @@ import ssl
 
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
-nick = 'CheeseBot-v1'
-realname = 'SCP Wiki Helper Bot'  # This will be displayed in WHOIS
+nick = 'Mando-Bot'
+realname = 'v1'  # This will be displayed in WHOIS
 port = 6697
 
 
@@ -22,7 +22,6 @@ def handle_command(command, args, handle, sender):
         if sender in ADMIN_USERS:
             handle.write('QUIT :\r\n')
             handle.flush()
-            
         else:
             handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
@@ -72,6 +71,7 @@ try:
 
 except Exception as e:
     print(f"Error: {e}")
+    break
 finally:
     try:
         ircsock.close()
