@@ -25,6 +25,9 @@ def handle_command(command, args, handle, sender):
         else:
             handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
+    elif command == "clear":
+        handle.write(f'PRIVMSG {channel} :Message history cleared!\r\n')
+        handle.flush()
 try:
     # Create socket and wrap with SSL
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
