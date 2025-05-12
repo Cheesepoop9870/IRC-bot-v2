@@ -5,6 +5,7 @@ import ssl
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
 nick = 'CheeseBot-v1'
+realname = 'SCP Wiki Helper Bot'  # This will be displayed in WHOIS
 port = 6697
 
 
@@ -34,7 +35,7 @@ try:
     handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
 
     print('NICK', nick, file=handle)
-    print('USER', nick, nick, nick, ':'+nick, file=handle)
+    print('USER', nick, nick, nick, ':'+realname, file=handle)
     
     joined = False
     while True:
