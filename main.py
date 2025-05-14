@@ -70,8 +70,7 @@ def handle_command(command, args, handle, sender):
             handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
             handle.flush()
     elif command == "ch":
-        output_str = (args)
-        output = output_str.split(",")
+        output = ' '.join(args).split(',')
         handle.write(f'PRIVMSG {channel} :{output[r.randint(0, len(output)-1)]}\r\n')
         handle.flush()
     elif command == "debug":
