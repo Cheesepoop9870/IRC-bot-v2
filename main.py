@@ -5,10 +5,15 @@ import random as r
 import sys
 
 server = 'irc.scpwiki.com'
-channel = '#cheesepoop9870'
+channels = set(['#cheesepoop9870'])  # Set of joined channels
 nick = 'Mando-Bot'
 realname = 'v1'  # This will be displayed in WHOIS
 port = 6697
+
+def send_to_channels(handle, message):
+    for channel in channels:
+        handle.write(f'PRIVMSG {channel} :{message}\r\n')
+        handle.flush()
 
 def str_remove(string):
     new_string = ""
@@ -20,13 +25,32 @@ def str_remove(string):
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_"} # Add admin usernames here
 
-def handle_command(command, args, handle, sender):
+def handle_command(command, args, handle, sender, channel):
     output = []
     output_str = ""
     #Handle IRC commands starting with !
     if command == "hello":
         handle.write(f'PRIVMSG {channel} :Hello!\r\n')
         handle.flush()
+    elif command == "join":
+        if sender in ADMIN_USERS and args:
+            new_channel = args[0] if args[0].startswith('#') else f'#{args[0]}'
+            channels.add(new_channel)
+            handle.write(f'JOIN {new_channel}\r\n')
+            handle.flush()
+        else:
+            handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized or missing channel name.\r\n')
+            handle.flush()
+    elif command == "leave":
+        if sender in ADMIN_USERS and args:
+            target = args[0] if args[0].startswith('#') else f'#{args[0]}'
+            if target in channels:
+                channels.remove(target)
+                handle.write(f'PART {target}\r\n')
+                handle.flush()
+        else:
+            handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized or missing channel name.\r\n')
+            handle.flush()
     elif command == "quit":
         if sender in ADMIN_USERS:
             handle.write('QUIT :\r\n')
@@ -111,8 +135,9 @@ try:
 
         # Check for PRIVMSG (chat messages)
         if "PRIVMSG" in line and ':!' in line:
-            # Extract the sender's nickname
+            # Extract the sender's nickname and channel
             sender = line.split('!')[0][1:]
+            channel = line.split('PRIVMSG')[1].split(':')[0].strip()
             # Extract the command part
             msg_parts = line.split(':!')
             if len(msg_parts) > 1:
@@ -122,7 +147,7 @@ try:
                 args = cmd_parts[1:] if len(cmd_parts) > 1 else []
 
                 # Handle the command
-                if handle_command(command, args, handle, sender):
+                if handle_command(command, args, handle, sender, channel):
                     break
 
 except Exception as e:
