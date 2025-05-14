@@ -1,8 +1,7 @@
-
 import socket
 import ssl
 import time
-import random
+import random as r
 
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
@@ -10,12 +9,19 @@ nick = 'Mando-Bot'
 realname = 'v1'  # This will be displayed in WHOIS
 port = 6697
 
+def str_remove(string):
+    new_string = ""
+    for char in string:
+        new_string = new_string.replace(char, "")
+    return new_string
+
 
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_"} # Add admin usernames here
 
 def handle_command(command, args, handle, sender):
     output = []
+    output_str = ""
     #Handle IRC commands starting with !
     if command == "hello":
         handle.write(f'PRIVMSG {channel} :Hello!\r\n')
@@ -31,13 +37,13 @@ def handle_command(command, args, handle, sender):
         handle.write(f'PRIVMSG {channel} :Message history cleared!\r\n')
         handle.flush()
     elif command == "!help":
-        handle.write(f'PRIVMSG {channel} :Available commands: !hello, !quit, !clear, !help\r\n')
+        handle.write(f'PRIVMSG {channel} :List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands\r\n')
         handle.flush()
     elif command == "setup":
         if sender in ADMIN_USERS:
             handle.write(f'PRIVMSG {channel} :Setting up the bot...\r\n')
-            handle.write(f'MODE {nick} :+B\r\n')
-            time.sleep(1)
+            # handle.write(f'MODE {nick} :+B\r\n')
+            time.sleep(3)
             handle.write(f"PRIVMSG {channel} :Bot setup complete!\r\n")
             handle.flush()
         else:
@@ -51,24 +57,33 @@ def handle_command(command, args, handle, sender):
                     num_dice = int(dice_args[0])
                     dice_size = int(dice_args[1])
                     for x in range(num_dice):
-                        output.append(random.randint(1, dice_size))
+                        output.append(r.randint(1, dice_size))
                     handle.write(f'PRIVMSG {channel} :{sender} rolled {num_dice}d{dice_size}: {str(output).strip("[]")} Total: {sum(output)}\r\n')
                     handle.flush()
                 except ValueError:
                     handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
                     handle.flush()
             else:
-                handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
+                handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
                 handle.flush()
         else:
-            handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
+            handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
             handle.flush()
+    elif command == "ch":
+        output_str = (args)
+        output = output_str.split(",")
+        handle.write(f'PRIVMSG {channel} :{output[r.randint(0, len(output)-1)]}\r\n')
+        handle.flush()
+    elif command == "debug":
+        output_str = (args)
+        output = output_str.split(",")
+        handle.write(f'PRIVMSG {channel} :{type(output)}, {type(output_str)}\r\n')
+        
 try:
     # Create socket and wrap with SSL
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ircsock = ssl.wrap_socket(ircsock)
     ircsock.connect((server, port))
-
     handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
 
     print('NICK', nick, file=handle)
@@ -88,6 +103,7 @@ try:
             # Join channel after first PING (server ready)
             if not joined:
                 handle.write(f'JOIN {channel}\r\n')
+                handle.write(f'MODE {nick} :+B\r\n')
                 handle.flush()
                 joined = True
             continue
