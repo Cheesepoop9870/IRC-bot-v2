@@ -2,6 +2,7 @@ import socket
 import ssl
 import time
 import random as r
+import sys
 
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
@@ -30,6 +31,7 @@ def handle_command(command, args, handle, sender):
         if sender in ADMIN_USERS:
             handle.write('QUIT :\r\n')
             handle.flush()
+            sys.exit(0)
         else:
             handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
