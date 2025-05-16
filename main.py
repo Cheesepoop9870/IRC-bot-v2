@@ -5,7 +5,7 @@ import random as r
 import sys
 
 server = 'irc.scpwiki.com'
-channel = '#cheesepoop9870'
+channel = '#site22'
 nick = 'Mando-Bot'
 realname = 'v1'  # This will be displayed in WHOIS
 port = 6697
