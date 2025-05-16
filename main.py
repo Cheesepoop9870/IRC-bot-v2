@@ -75,6 +75,9 @@ def handle_command(command, args, handle, sender):
         output = ' '.join(args).split(',')
         handle.write(f'PRIVMSG {channel} :{output[r.randint(0, len(output)-1)]}\r\n')
         handle.flush()
+    elif command == "users":
+        handle.write(f'NAMES {channel}\r\n')
+        handle.flush()
     elif command == "debug":
         output_str = (args)
         output = output_str.split(",")
