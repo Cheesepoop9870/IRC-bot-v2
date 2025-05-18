@@ -3,11 +3,19 @@ import ssl
 import time
 import random as r
 import sys
+from local_googlesearch_python import search
+# import googlesearch
+# https://pypi.org/project/googlesearch-python/
+# from local_pyscp import *
+
+
+#note: add !pingall message availibility
 
 server = 'irc.scpwiki.com'
-channel = '#site22'
+channel = '#cheesepoop9870'
+# channel_debug = ""
 nick = 'Mando-Bot'
-realname = 'v1'  # This will be displayed in WHOIS
+realname = 'v1.2.5-alpha'  # This will be displayed in WHOIS
 port = 6697
 
 def str_remove(string):
@@ -18,14 +26,14 @@ def str_remove(string):
 
 
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_"} # Add admin usernames here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress",} # Add admin usernames here
 
-def handle_command(command, args, handle, sender):
+def handle_command(command, args, handle, sender, channel_debug):
     output = []
     output_str = ""
     #Handle IRC commands starting with !
     if command == "hello":
-        handle.write(f'PRIVMSG {channel} :Hello!\r\n')
+        handle.write(f'PRIVMSG {channel_debug} :Hello, {sender}!\r\n')
         handle.flush()
     elif command == "quit":
         if sender in ADMIN_USERS:
@@ -33,23 +41,23 @@ def handle_command(command, args, handle, sender):
             handle.flush()
             sys.exit(0)
         else:
-            handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
+            handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
     elif command == "clear":
-        handle.write(f'PRIVMSG {channel} :Message history cleared!\r\n')
+        handle.write(f'PRIVMSG {channel_debug} :Message history cleared!\r\n')
         handle.flush()
     elif command == "!help":
-        handle.write(f'PRIVMSG {channel} :List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands\r\n')
+        handle.write(f'PRIVMSG {channel_debug} :List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands\r\n')
         handle.flush()
     elif command == "setup":
         if sender in ADMIN_USERS:
-            handle.write(f'PRIVMSG {channel} :Setting up the bot...\r\n')
-            # handle.write(f'MODE {nick} :+B\r\n')
+            handle.write(f'PRIVMSG {channel_debug} :Setting up the bot...\r\n')
+            
+            handle.write(f"PRIVMSG {channel_debug} :Bot setup complete!\r\n")
             time.sleep(3)
-            handle.write(f"PRIVMSG {channel} :Bot setup complete!\r\n")
             handle.flush()
         else:
-            handle.write(f'PRIVMSG {channel} :Sorry, you are not authorized to use this command.\r\n')
+            handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
     elif command == "!roll":
         if len(args) == 1:
@@ -60,28 +68,35 @@ def handle_command(command, args, handle, sender):
                     dice_size = int(dice_args[1])
                     for x in range(num_dice):
                         output.append(r.randint(1, dice_size))
-                    handle.write(f'PRIVMSG {channel} :{sender} rolled {num_dice}d{dice_size}: {str(output).strip("[]")} Total: {sum(output)}\r\n')
+                    handle.write(f'PRIVMSG {channel_debug} :{sender} rolled {num_dice}d{dice_size}: {str(output).strip("[]")} Total: {sum(output)}\r\n')
                     handle.flush()
                 except ValueError:
-                    handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
+                    handle.write(f'PRIVMSG {channel_debug} :Invalid dice format. Use: !roll NdM (example: !roll 1d20)\r\n')
                     handle.flush()
             else:
-                handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
+                handle.write(f'PRIVMSG {channel_debug} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
                 handle.flush()
         else:
-            handle.write(f'PRIVMSG {channel} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
+            handle.write(f'PRIVMSG {channel_debug} :Invalid dice format. Use: !!roll NdM (example: !!roll 1d20)\r\n')
             handle.flush()
     elif command == "ch":
         output = ' '.join(args).split(',')
-        handle.write(f'PRIVMSG {channel} :{output[r.randint(0, len(output)-1)]}\r\n')
+        handle.write(f'PRIVMSG {channel_debug} :{output[r.randint(0, len(output)-1)]}\r\n')
         handle.flush()
-    elif command == "users":
-        handle.write(f'NAMES {channel}\r\n')
+    elif command == "everyone":
+        handle.write(f'NAMES {channel_debug}\r\n')
         handle.flush()
-    elif command == "debug":
-        output_str = (args)
-        output = output_str.split(",")
-        handle.write(f'PRIVMSG {channel} :{type(output)}, {type(output_str)}\r\n')
+    elif command == "join":
+        handle.write(f'JOIN {args[0]}\r\n')
+        handle.flush()
+    elif command == "leave":
+        if sender in ADMIN_USERS:
+            handle.write(f'LEAVE {args[0]}\r\n')
+            handle.flush()
+    elif command == "google":
+        output = googlesearch.search("args", num_results=1)
+        handle.write(f'PRIVMSG {channel_debug} :{output}\r\n')
+        handle.flush()
         
 try:
     # Create socket and wrap with SSL
@@ -113,10 +128,13 @@ try:
             continue
 
         # Check for PRIVMSG (chat messages)
-        if "PRIVMSG" in line and ':!' in line:
+        if "PRIVMSG" in line and ':!' in line or "PRIVMSG" in line and ':@' in line:
             # Extract the sender's nickname
             sender = line.split('!')[0][1:]
+            # Extract the channel
+            channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
             # Extract the command part
+            
             msg_parts = line.split(':!')
             if len(msg_parts) > 1:
                 # Split command and arguments
@@ -125,7 +143,7 @@ try:
                 args = cmd_parts[1:] if len(cmd_parts) > 1 else []
 
                 # Handle the command
-                if handle_command(command, args, handle, sender):
+                if handle_command(command, args, handle, sender, channel_temp):
                     break
 
 except Exception as e:
