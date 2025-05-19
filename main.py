@@ -17,6 +17,8 @@ channel = '#cheesepoop9870'
 nick = 'Mando-Bot'
 realname = 'v1.2.5-alpha'  # This will be displayed in WHOIS
 port = 6697
+channel_list = ["#cheesepoop9870", "#site22", "facility36",]
+
 
 def str_remove(string):
     new_string = ""
@@ -30,6 +32,7 @@ ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", 
 
 def handle_command(command, args, handle, sender, channel_debug):
     output = []
+    output2 = []
     output_str = ""
     #Handle IRC commands starting with !
     if command == "hello":
@@ -85,23 +88,38 @@ def handle_command(command, args, handle, sender, channel_debug):
         handle.flush()
     elif command == "everyone":
         handle.write(f'NAMES {channel_debug}\r\n')
+        handle.write(f"PRIVMSG {channel_debug} :note from cheese: dosnet work rn\r\n")
+        output = line
+        handle.write(f'PRIVMSG {channel_debug} :{output}\r\n')
         handle.flush()
     elif command == "join":
         handle.write(f'JOIN {args[0]}\r\n')
+        channel_list.append(args[0])
         handle.flush()
     elif command == "leave":
         if sender in ADMIN_USERS:
             handle.write(f'LEAVE {args[0]}\r\n')
+            channel_list.remove(args[0])
             handle.flush()
-    elif command == "google":
-        output = googlesearch.search("args", num_results=1)
-        handle.write(f'PRIVMSG {channel_debug} :{output}\r\n')
+    elif command == "google" or command == "g":
+        output = list(search(args, num_results=2, advanced=True))
+        output = str(output[1]).split("(")
+        output.pop(0) # Remove the first element
+        output2 = str(output[0]).split("=")
+        output2.pop(0) # Remove the first element
+        output = output2
+        output_str = "".join(output)
+        output2 = output_str.split("title")
+        output_str = "".join(output2)
+        output = output_str.split(")")
+        handle.write(f'PRIVMSG {channel_debug} :{sender}: {output[0]}\r\n')
         handle.flush()
         
 try:
     # Create socket and wrap with SSL
+    context = ssl.create_default_context()
     ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ircsock = ssl.wrap_socket(ircsock)
+    ircsock = context.wrap_socket(ircsock, server_hostname=server)
     ircsock.connect((server, port))
     handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
 
@@ -114,6 +132,8 @@ try:
         line = handle.readline().strip()
         print(line)
 
+
+        # Check for PING and respond with PONG
         if "PING" in line:
             pong = "PONG :" + line.split(':')[1]
             handle.write(pong + '\r\n')
@@ -121,14 +141,15 @@ try:
             
             # Join channel after first PING (server ready)
             if not joined:
-                handle.write(f'JOIN {channel}\r\n')
+                for x in range(0, len(channel_list)):
+                    handle.write(f'JOIN {channel_list[x]}\r\n')
                 handle.write(f'MODE {nick} :+B\r\n')
                 handle.flush()
                 joined = True
             continue
 
         # Check for PRIVMSG (chat messages)
-        if "PRIVMSG" in line and ':!' in line or "PRIVMSG" in line and ':@' in line:
+        if "PRIVMSG" in line and ':!' in line or "MSG" in line and ":!" in line:
             # Extract the sender's nickname
             sender = line.split('!')[0][1:]
             # Extract the channel
@@ -151,6 +172,12 @@ except Exception as e:
     # break
 finally:
     try:
-        ircsock.close()
+        context = ssl.create_default_context()
+        ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ircsock = context.wrap_socket(ircsock)
+        handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
+        handle.write('QUIT :\r\n')
+        handle.flush()
+        sys.exit(1)
     except:
         pass

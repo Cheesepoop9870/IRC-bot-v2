@@ -4,7 +4,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 from requests import get
 from urllib.parse import unquote # to decode the url
-from .user_agents import get_useragent
+from user_agents import get_useragent
 
 
 def _req(term, results, lang, start, proxies, timeout, safe, ssl_verify, region):
