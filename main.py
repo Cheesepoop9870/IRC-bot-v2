@@ -55,7 +55,7 @@ def handle_command(command, args, handle, sender, channel_debug):
     elif command == "setup":
         if sender in ADMIN_USERS:
             handle.write(f'PRIVMSG {channel_debug} :Setting up the bot...\r\n')
-            
+
             handle.write(f"PRIVMSG {channel_debug} :Bot setup complete!\r\n")
             time.sleep(3)
             handle.flush()
@@ -88,10 +88,13 @@ def handle_command(command, args, handle, sender, channel_debug):
         handle.flush()
     elif command == "everyone":
         handle.write(f'NAMES {channel_debug}\r\n')
-        handle.write(f"PRIVMSG {channel_debug} :note from cheese: dosnet work rn\r\n")
-        output = line
-        handle.write(f'PRIVMSG {channel_debug} :{output}\r\n')
         handle.flush()
+        # Get next line which contains names
+        response = handle.readline().strip()
+        if "353" in response:  # 353 is the IRC code for names list
+            names = response.split(':')[-1].strip()  # Get names portion
+            handle.write(f'PRIVMSG {channel_debug} :Users in channel: {names}\r\n')
+            handle.flush()
     elif command == "join":
         handle.write(f'JOIN {args[0]}\r\n')
         channel_list.append(args[0])
@@ -114,7 +117,7 @@ def handle_command(command, args, handle, sender, channel_debug):
         output = output_str.split(")")
         handle.write(f'PRIVMSG {channel_debug} :{sender}: {output[0]}\r\n')
         handle.flush()
-        
+
 try:
     # Create socket and wrap with SSL
     context = ssl.create_default_context()
@@ -125,8 +128,8 @@ try:
 
     print('NICK', nick, file=handle)
     print('USER', nick, nick, nick, ':'+realname, file=handle)
-    
-    
+
+
     joined = False
     while True:
         line = handle.readline().strip()
@@ -138,7 +141,7 @@ try:
             pong = "PONG :" + line.split(':')[1]
             handle.write(pong + '\r\n')
             handle.flush()
-            
+
             # Join channel after first PING (server ready)
             if not joined:
                 for x in range(0, len(channel_list)):
@@ -155,7 +158,7 @@ try:
             # Extract the channel
             channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
             # Extract the command part
-            
+
             msg_parts = line.split(':!')
             if len(msg_parts) > 1:
                 # Split command and arguments
