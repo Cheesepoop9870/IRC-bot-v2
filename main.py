@@ -12,7 +12,7 @@ from local_googlesearch_python import search
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
 #note: add !pingall message availibility
-
+#note: add a swear filter for now
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
 # channel_debug = ""
@@ -30,13 +30,13 @@ def str_remove(string):
 
 
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress",} # Add admin usernames here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza"} # Add admin usernames here
 
 def handle_command(command, args, handle, sender, channel_debug):
     output = []
     output2 = []
     output_str = ""
-    #dice stuff
+    #dice stuff bc im lazy
     commandargs = ""
     commandargs2 = []
     commandargsoutput = []
@@ -135,6 +135,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             channel_list.remove(args[0])
             handle.flush()
     elif command == "google" or command == "g":
+        #note: ADD SPACE BETWEEN URL AND TITLE
         # handle.write(f'PRIVMSG {channel_debug} :{bool(list(search(args, num_results=1))[0])}\r\n')
         if not bool(list(search(args, num_results=1))[0]): # false
             output = list(search(args, num_results=2, advanced=True))
@@ -171,6 +172,10 @@ def handle_command(command, args, handle, sender, channel_debug):
         else:
             handle.write(f'PRIVMSG {channel_debug} :Error! if this happens, tell cheese. Error string 424\r\n')
     elif command == "flags":
+        if args == "debug":
+            if sender in ADMIN_USERS:
+                handle.write(f'PRIVMSG {channel_debug} :Debug mode enabled\r\n')
+                handle.flush()
         handle.write(f'PRIVMSG {channel_debug} :does nothing rn\r\n')
         handle.flush()
     elif command == "ch":
@@ -208,6 +213,8 @@ try:
 
             # Join channel after first PING (server ready)
             if not joined:
+                handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
+                time.sleep(2)
                 for x in range(0, len(channel_list)):
                     handle.write(f'JOIN {channel_list[x]}\r\n')
                 handle.write(f'MODE {nick} :+B\r\n')
