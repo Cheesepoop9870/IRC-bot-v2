@@ -3,7 +3,7 @@ import requests
 url = "https://api.crom.avn.sh"
 
 body = """
-query Search($query: String!, $noAttributions: false) {
+query Search($query: String!, $noAttributions: Boolean!) {
   searchPages(query: $query, filter: { anyBaseUrl: "http://scp-wiki.wikidot.com" }) {
     url
     wikidotInfo {
@@ -21,7 +21,8 @@ query Search($query: String!, $noAttributions: false) {
 """
 
 variables = {
-    'noAttributions': False  # Instead of "false", use Python's False
+    'query': 'SCP',  # Add your search term here
+    'noAttributions': False
 }
 
 response = requests.post(url=url, json={"query": body, "variables": variables})
