@@ -39,7 +39,7 @@ def wikisearch(query):
 
 if __name__ == "__main__":
   output = wikisearch("ts hu").split(",")
-  output2 = np.array([],[])
+  output2 = np.array([])  # Initialize as empty 1D array
   output3 = []
   print(f"0 {output}")
   print("\n")
@@ -56,7 +56,7 @@ if __name__ == "__main__":
   output.insert(0, str(output4))
   print("\n")
   print(f"4 {output[0:8]}")
-  np.append(output2, output)
+  output2 = np.append(output2, output)  # Assign the result back to output2
   print("\n")
   print(f"5 {output2}")
   
