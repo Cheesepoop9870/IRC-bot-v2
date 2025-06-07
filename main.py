@@ -4,7 +4,9 @@ import time
 import random as r
 import sys
 import re
+import requests
 from local_googlesearch_python import search
+
 # import googlesearch
 # https://pypi.org/project/googlesearch-python/
 # from pyscp import core, snapshot, wikidot
@@ -18,41 +20,73 @@ server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
 # channel_debug = ""
 nick = 'Mando-Bot'
-realname = 'v1.2.5-alpha'  # This will be displayed in WHOIS
+realname = 'v1.2.7'  # This will be displayed in WHOIS
 port = 6697
 channel_list = ["#cheesepoop9870",] #facility36",]
 
+#crom api
 
-def str_remove(string):
-    new_string = ""
-    for char in string:
-        new_string = new_string.replace(char, "")
-    return new_string
+def wikisearch(query):
+    url = "https://api.crom.avn.sh"
+    body = """
+    query Search($query: String!, $noAttributions: Boolean!) {
+      searchPages(query: $query, filter: { anyBaseUrl: "http://scp-wiki.wikidot.com" }) {
+        url
+        wikidotInfo {
+          title
+          rating
+        }
+        attributions @skip(if: $noAttributions) {
+          type
+          user {
+            name
+          }
+        }
+      }
+    }
+    """
+    variables2 = {
+      'query': f'{query}',  # term
+      'noAttributions': False
+    }
+    response = requests.post(url=url, json={"query": body, "variables": variables2})
+    if response.status_code == 200:
+      return response.content
+    else: 
+      return f"Error {response.status_code}"
 
 
 
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza"} # Add admin usernames here
 
+debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
+
 def handle_command(command, args, handle, sender, channel_debug):
-    debug_flag = 0 # 0 = off, 1 = on SHOULD BE 0 WHEN NOT IN DEBUG MODE
+    
+    #debug command
     def debug(var, args):
       if debug_flag == 1:
            handle.write(f'PRIVMSG {channel_debug} :{var} {args}\r\n')
            handle.flush()
+
+    #variables
     output = []
     output2 = []
     output_str = ""
+    
     #dice stuff bc im lazy
     commandargs = ""
     commandargs2 = []
     commandargsoutput = []
     commandargs3 = []
     cflag_plus_roll = 0
+    
     #Handle IRC commands starting with !
     if command == "hello":
         handle.write(f'PRIVMSG {channel_debug} :Hello, {sender}!\r\n')
         handle.flush()
+        
     elif command == "quit":
         if sender in ADMIN_USERS:
             handle.write(f'QUIT :Quit command used by {sender} in channel {channel_debug}\r\n')
@@ -61,22 +95,25 @@ def handle_command(command, args, handle, sender, channel_debug):
         else:
             handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
+            
     elif command == "clear":
         handle.write(f'PRIVMSG {channel_debug} :Message history cleared!\r\n')
         handle.flush()
+        
     elif command == "commands":
         handle.write(f'PRIVMSG {channel_debug} :List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands\r\n')
         handle.flush()
+        
     elif command == "setup":
         if sender in ADMIN_USERS:
             handle.write(f'PRIVMSG {channel_debug} :Setting up the bot...\r\n')
-
             handle.write(f"PRIVMSG {channel_debug} :Bot setup complete!\r\n")
             #time.sleep(3)
             handle.flush()
         else:
             handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
             handle.flush()
+            
     elif command == "!roll":
         try:
             commandargs = "".join(args)
@@ -121,6 +158,7 @@ def handle_command(command, args, handle, sender, channel_debug):
         except IndexError:
             handle.write(f'PRIVMSG {channel_debug} :Invalid dice format. use 1d10 or similar\r\n')
             handle.flush()
+            
     elif command == "everyone":
         handle.write(f'NAMES {channel_debug}\r\n')
         handle.flush()
@@ -132,26 +170,30 @@ def handle_command(command, args, handle, sender, channel_debug):
             handle.flush()
         else:
             handle.write(f"PRIVMSG {channel_debug} :Error! if this happenes, tell cheese. Error string: 425/404\r\n")
-    elif command == "join":
+            handle.flush()
+            
+    elif command == "join": #add multiple channel support
         handle.write(f'JOIN {args[0]}\r\n')
         channel_list.append(args[0])
-        if not "#" in args[0]:
+        if "#" not in args[0]:
             handle.write(f'PRIVMSG {channel_debug} :{sender}: Invalid format. Use !join #channel\r\n')
             handle.flush()
         else:
           handle.write(f'PRIVMSG {channel_debug} :Joined {args[0]}\r\n')
         handle.flush()
-    elif command == "leave":
+        
+    elif command == "leave": #add multiple channel support
         if sender in ADMIN_USERS:
             handle.write(f'PART {args[0]}\r\n')
             channel_list.remove(args[0])
             handle.flush()
+            
     elif command == "google" or command == "g":
         #note: ADD SPACE BETWEEN URL AND TITLE
         debug(-1, list(search(args, num_results=2)))
         debug(-1.5, bool(list(search(args, num_results=1))[0]))
         debug(0, bool(list(search(args, num_results=1))[0]))
-        if not bool(list(search(args, num_results=1))[0]) or "/search?" in list(search(args, num_results=1))[0]: # false, 1st result contains no results/404
+        if not bool(list(search(args, num_results=1))[0]) or "/search?" in str(list(search(args, num_results=1))[0]): # false, 1st result contains no results/404
             output = list(search(args, num_results=2, advanced=True))
             debug(1, output)
             output = str(output[1]).split("(", 1)
@@ -173,7 +215,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             output_str = output_str[0:len(output_str)-2]
             #404 check
             if ", title | , description |" in output_str or "/search?" in output_str:
-              handle.write(f'PRIVMSG {channel_debug} :{sender}: Error 404!\r\n')
+              handle.write(f'PRIVMSG {channel_debug} :{sender}: No results found!\r\n')
               handle.flush()
             else:
               handle.write(f'PRIVMSG {channel_debug} :{sender}: {output_str}\r\n')
@@ -203,33 +245,47 @@ def handle_command(command, args, handle, sender, channel_debug):
                 output = output_str.split(",")
                 #do same thing as above
                 if ", title | , description |" in output_str or "/search?" in output_str:
-                  handle.write(f'PRIVMSG {channel_debug} :{sender}: Error 404!\r\n')
+                  handle.write(f'PRIVMSG {channel_debug} :{sender}: Error!\r\n')
                   handle.flush()
                 else:
                   handle.write(f"PRIVMSG {channel_debug} :{sender}: {output_str[0:len(output_str)-2]}\r\n")
                   handle.flush()
-            except IndexError:
-                handle.write(f'PRIVMSG {channel_debug} :Error! if this happenes, tell cheese. Error string: {IndexError}\r\n')
+            except Exception as e:
+                handle.write(f'PRIVMSG {channel_debug} :Error! if this happenes, tell cheese. Error string: {e}\r\n')
                 handle.flush()
         else:
             handle.write(f'PRIVMSG {channel_debug} :Error! if this happens, tell cheese. Error string 424\r\n')
-    elif command == "flags":
-        if args == "debug":
+            
+    elif command == "!flags":
+        if " ".join(args) == "debug":
             if sender in ADMIN_USERS:
-                debug_flag += 1
+                global debug_flag
+                debug_flag = debug_flag + 1
                 if debug_flag > 1:
                     debug_flag = 0
                 handle.write(f'PRIVMSG {channel_debug} :Debug mode = {debug_flag}\r\n')
                 handle.flush()
-        
-        handle.flush()
-    elif command == "ch":
-        output_str = "".join(args)
+                debug("", "r")
+            else:
+                handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
+                handle.flush()
+                
+    elif command == "ch" or command == "choose":
+        output_str = " ".join(args)
         output = output_str.split(",")
         handle.write(f'PRIVMSG {channel_debug} :{sender}: {output[r.randint(0, len(output)-1)]}\r\n')
-        handle.flush()
+        handle.flush()    
         
-    # elif 
+    elif command == "search" or command == "s":
+        output = wikisearch(" ".join(args))
+        debug(0, output)
+        handle.write(f'PRIVMSG {channel_debug} :{sender}: {output}\r\n')
+
+    elif command == "raw":
+        if sender in ADMIN_USERS:
+            handle.write(f'{args}\r\n')
+            handle.flush()
+
 ##################################################################################
 ##################################################################################
 
@@ -270,7 +326,7 @@ try:
             continue
 
         # Check for PRIVMSG (chat messages)
-        if "PRIVMSG" in line and ':!' in line or "MSG" in line and ":!" in line:
+        if "PRIVMSG" in line and ':!' in line:
             # Extract the sender's nickname
             sender = line.split('!')[0][1:]
             # Extract the channel
@@ -288,8 +344,9 @@ try:
                 if history_bypass == 1:
                     if handle_command(command, args, handle, sender, channel_temp):
                         break
-            history_check = line.split(":!clear")
-            if len(history_check) > 1:
+            history_check = line.split(":!!clear")
+            history_channel = line #may break
+            if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
                 history_bypass = 1
                 handle.write(f'PRIVMSG {channel_temp} :History cleared!\r\n')
 except Exception as e:
