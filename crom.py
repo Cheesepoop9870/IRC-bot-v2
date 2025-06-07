@@ -39,6 +39,22 @@ def wikisearch(query):
 
 if __name__ == "__main__":
   output = wikisearch("ts hu").split(",")
+  urlcount = 0
+  coords = 0
+  for x in range (0, len(output)):
+    print(f"{x} {output[x]}")
+  for x in range (0, len(output)):
+    print(f"{x} {output[x]}")
+    if "url" in output[x]:
+      urlcount = urlcount + 1
+      if urlcount == 2:
+        coords = x
+        break
+  for x in range (0, len(output)-1):
+    print(f"{x} {output[x]}")
+    output.pop(coords+x)
+
+  print("\n")
   output2 = np.array([])  # Initialize as empty 1D array
   output3 = []
   print(f"0 {output}")
@@ -59,7 +75,20 @@ if __name__ == "__main__":
   output2 = np.append(output2, output[0:8])  # Assign the result back to output2
   print("\n")
   print(f"5 {output2}")
-  output2 = np.append([1,2,3,4,5,6,7,8,9,10])
+  ########################################
   print("\n")
   print(f"6 {output2}")
-  
+  print("\n")
+  for x in range(0, len(output2)):
+    print(f"{x} {output2[x]}")
+  print("\n")
+  output4 = output2[1]
+  output3 = output4.split('\"wikidotInfo\":{')
+  output3.pop(0)
+  print(f"7 {output3}")
+  output2[1] = output3[0]
+  print("\n")
+  print(f"8 {output2}")
+  print("\n")
+  for x in range(0, len(output2)):
+    print(f"{x} {output2[x]}")
