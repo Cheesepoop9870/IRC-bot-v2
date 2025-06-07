@@ -68,6 +68,29 @@ def handle_command(command, args, handle, sender, channel_debug):
       if debug_flag == 1:
            handle.write(f'PRIVMSG {channel_debug} :{var} {args}\r\n')
            handle.flush()
+    
+    #message splitting function
+    def send_message(channel, message):
+        if len(message) <= 433:
+            handle.write(f'PRIVMSG {channel} :{message}\r\n')
+            handle.flush()
+        else:
+            # Split message into chunks of 433 characters or less
+            chunks = []
+            while len(message) > 433:
+                # Find a good place to split (prefer space)
+                split_pos = 433
+                if ' ' in message[:433]:
+                    split_pos = message[:433].rfind(' ')
+                chunks.append(message[:split_pos])
+                message = message[split_pos:].lstrip()
+            if message:  # Add remaining part
+                chunks.append(message)
+            
+            # Send each chunk
+            for chunk in chunks:
+                handle.write(f'PRIVMSG {channel} :{chunk}\r\n')
+                handle.flush()
 
     #variables
     output = []
@@ -83,8 +106,7 @@ def handle_command(command, args, handle, sender, channel_debug):
     
     #Handle IRC commands starting with !
     if command == "hello":
-        handle.write(f'PRIVMSG {channel_debug} :Hello, {sender}!\r\n')
-        handle.flush()
+        send_message(channel_debug, f'Hello, {sender}!')
         
     elif command == "quit":
         if sender in ADMIN_USERS:
@@ -92,26 +114,21 @@ def handle_command(command, args, handle, sender, channel_debug):
             handle.flush()
             sys.exit(0)
         else:
-            handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
-            handle.flush()
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
             
     elif command == "clear":
-        handle.write(f'PRIVMSG {channel_debug} :Message history cleared!\r\n')
-        handle.flush()
+        send_message(channel_debug, 'Message history cleared!')
         
     elif command == "commands":
-        handle.write(f'PRIVMSG {channel_debug} :List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands\r\n')
-        handle.flush()
+        send_message(channel_debug, 'List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands')
         
     elif command == "setup":
         if sender in ADMIN_USERS:
-            handle.write(f'PRIVMSG {channel_debug} :Setting up the bot...\r\n')
-            handle.write(f"PRIVMSG {channel_debug} :Bot setup complete!\r\n")
+            send_message(channel_debug, 'Setting up the bot...')
+            send_message(channel_debug, 'Bot setup complete!')
             #time.sleep(3)
-            handle.flush()
         else:
-            handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
-            handle.flush()
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
             
     elif command == "!roll":
         try:
@@ -125,16 +142,13 @@ def handle_command(command, args, handle, sender, channel_debug):
             #inf/0 check
             if commandargs2[0] in ["inf", "0", "Inf", "infinity",] or commandargs2[1] in ["inf", "0", "Inf", "infinity",]:
               if commandargs2[0] == "0" or commandargs2[1] == "0":
-                handle.write(f"PRIVMSG {channel_debug} :{sender} rolled {commandargs2[0]}d{commandargs2[1]} and got \r\n")
-                handle.flush()
+                send_message(channel_debug, f"{sender} rolled {commandargs2[0]}d{commandargs2[1]} and got ")
               elif commandargs2[0] == "inf" or commandargs2[1] == "inf":
                 rng = r.randint(1, 2)
                 if rng == 1:
-                  handle.write(f"PRIVMSG {channel_debug} : {sender} rolled {commandargs2[0]}d{commandargs2[1]} and got {r.randint(-1000000000000000000000000000000000000000000000000000000, 1000000000000000000000000000000000000000000000000000000)}\r\n")
-                  handle.flush()
+                  send_message(channel_debug, f" {sender} rolled {commandargs2[0]}d{commandargs2[1]} and got {r.randint(-1000000000000000000000000000000000000000000000000000000, 1000000000000000000000000000000000000000000000000000000)}")
                 else: #rng == 2
-                    handle.write(f"PRIVMSG {channel_debug} :{sender} rolled {commandargs2[0]}d{commandargs2[1]} and got {infindex[r.randint(0, len(infindex)-1)]} \r\n")
-                    handle.flush()
+                    send_message(channel_debug, f"{sender} rolled {commandargs2[0]}d{commandargs2[1]} and got {infindex[r.randint(0, len(infindex)-1)]} ")
                 rng = 0
                 commandargs = ""
                 commandargs2 = []
@@ -144,19 +158,16 @@ def handle_command(command, args, handle, sender, channel_debug):
               commandargs2.append((str(commandargsoutput)).strip("[]"))
           #add some 1d6 +1 funtionality
             if cflag_plus_roll == 0:
-              handle.write(f"PRIVMSG {channel_debug} :{sender} rolled {commandargs2[0]}d{commandargs2[1]}: {commandargs2[len(commandargs2)-1]} Total: {sum(commandargsoutput)}\r\n")
-              handle.flush()
+              send_message(channel_debug, f"{sender} rolled {commandargs2[0]}d{commandargs2[1]}: {commandargs2[len(commandargs2)-1]} Total: {sum(commandargsoutput)}")
             else:
-              handle.write(f"PRIVMSG {channel_debug} :{sender} rolled {commandargs2[0]}d{commandargs2[1]}(+{commandargs3[1]}): {commandargs2[len(commandargs2)-1]} Total: {sum(commandargsoutput)}(+{commandargs3[1]}) = {sum(commandargsoutput, int(commandargs3[1]))}\r\n")
-              handle.flush()
+              send_message(channel_debug, f"{sender} rolled {commandargs2[0]}d{commandargs2[1]}(+{commandargs3[1]}): {commandargs2[len(commandargs2)-1]} Total: {sum(commandargsoutput)}(+{commandargs3[1]}) = {sum(commandargsoutput, int(commandargs3[1]))}")
             commandargs = ""
             commandargs2 = []
             commandargsoutput = []
             commandargs3 = []
             cflag_plus_roll = 0
         except IndexError:
-            handle.write(f'PRIVMSG {channel_debug} :Invalid dice format. use 1d10 or similar\r\n')
-            handle.flush()
+            send_message(channel_debug, 'Invalid dice format. use 1d10 or similar')
             
     elif command == "everyone":
         handle.write(f'NAMES {channel_debug}\r\n')
@@ -165,20 +176,17 @@ def handle_command(command, args, handle, sender, channel_debug):
         response = handle.readline().strip()
         if "353" in response:  # 353 is the IRC code for names list
             names = response.split(':')[-1].strip()  # Get names portion
-            handle.write(f'PRIVMSG {channel_debug} :Users in channel: {names}\r\n')
-            handle.flush()
+            send_message(channel_debug, f'Users in channel: {names}')
         else:
-            handle.write(f"PRIVMSG {channel_debug} :Error! if this happenes, tell cheese. Error string: 425/404\r\n")
-            handle.flush()
+            send_message(channel_debug, 'Error! if this happenes, tell cheese. Error string: 425/404')
             
     elif command == "join": #add multiple channel support
         handle.write(f'JOIN {args[0]}\r\n')
         channel_list.append(args[0])
         if "#" not in args[0]:
-            handle.write(f'PRIVMSG {channel_debug} :{sender}: Invalid format. Use !join #channel\r\n')
-            handle.flush()
+            send_message(channel_debug, f'{sender}: Invalid format. Use !join #channel')
         else:
-          handle.write(f'PRIVMSG {channel_debug} :Joined {args[0]}\r\n')
+          send_message(channel_debug, f'Joined {args[0]}')
         handle.flush()
         
     elif command == "leave": #add multiple channel support
@@ -217,11 +225,9 @@ def handle_command(command, args, handle, sender, channel_debug):
             output_str = output_str[0:len(output_str)-2]
             #404 check
             if ", title | , description |" in output_str or "/search?" in output_str:
-              handle.write(f'PRIVMSG {channel_debug} :{sender}: No results found!\r\n')
-              handle.flush()
+              send_message(channel_debug, f'{sender}: No results found!')
             else:
-              handle.write(f'PRIVMSG {channel_debug} :{sender}: {output_str}\r\n')
-              handle.flush()
+              send_message(channel_debug, f'{sender}: {output_str}')
         elif bool(list(search(args, num_results=1))[0]): # true
             try:
                 output = list(search(args, num_results=1, advanced=True))
@@ -247,16 +253,13 @@ def handle_command(command, args, handle, sender, channel_debug):
                 output = output_str.split(",")
                 #do same thing as above
                 if ", title | , description |" in output_str or "/search?" in output_str:
-                  handle.write(f'PRIVMSG {channel_debug} :{sender}: Error!\r\n')
-                  handle.flush()
+                  send_message(channel_debug, f'{sender}: Error!')
                 else:
-                  handle.write(f"PRIVMSG {channel_debug} :{sender}: {output_str[0:len(output_str)-2]}\r\n")
-                  handle.flush()
+                  send_message(channel_debug, f"{sender}: {output_str[0:len(output_str)-2]}")
             except Exception as e:
-                handle.write(f'PRIVMSG {channel_debug} :Error! if this happenes, tell cheese. Error string: {e}\r\n')
-                handle.flush()
+                send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
         else:
-            handle.write(f'PRIVMSG {channel_debug} :Error! if this happens, tell cheese. Error string 424\r\n')
+            send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
             
     elif command == "!flags":
         if " ".join(args) == "debug":
@@ -265,23 +268,20 @@ def handle_command(command, args, handle, sender, channel_debug):
                 debug_flag = debug_flag + 1
                 if debug_flag > 1:
                     debug_flag = 0
-                handle.write(f'PRIVMSG {channel_debug} :Debug mode = {debug_flag}\r\n')
-                handle.flush()
+                send_message(channel_debug, f'Debug mode = {debug_flag}')
                 debug("", "r")
             else:
-                handle.write(f'PRIVMSG {channel_debug} :Sorry, you are not authorized to use this command.\r\n')
-                handle.flush()
+                send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
                 
     elif command == "ch" or command == "choose":
         output_str = " ".join(args)
         output = output_str.split(",")
-        handle.write(f'PRIVMSG {channel_debug} :{sender}: {output[r.randint(0, len(output)-1)]}\r\n')
-        handle.flush()    
+        send_message(channel_debug, f'{sender}: {output[r.randint(0, len(output)-1)]}')    
         
     elif command == "search" or command == "s":
         output = wikisearch(" ".join(args))
         debug(0, output)
-        handle.write(f'PRIVMSG {channel_debug} :{sender}: {output}\r\n')
+        send_message(channel_debug, f'{sender}: {output}')
 
     elif command == "raw":
         if sender in ADMIN_USERS:
@@ -350,7 +350,7 @@ try:
             history_channel = line #may break
             if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
                 history_bypass = 1
-                handle.write(f'PRIVMSG {channel_temp} :History cleared!\r\n')
+                send_message(channel_temp, 'History cleared!')
 except Exception as e:
     print(f"Error: {e}")
     # break
