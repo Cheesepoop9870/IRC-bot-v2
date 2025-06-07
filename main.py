@@ -1,3 +1,4 @@
+import json
 import random as r
 import re
 import requests
@@ -49,9 +50,9 @@ def wikisearch(query):
     }
     response = requests.post(url=url, json={"query": body, "variables": variables2})
     if response.status_code == 200:
-      return response.content
+      return json.loads(response.content)
     else: 
-      return f"Error {response.status_code}"
+      return f"Error {response.status_code}. If 5XX, try again later, if 4XX, tell cheese."
 
 
 
