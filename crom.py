@@ -50,13 +50,16 @@ if __name__ == "__main__":
   print("\n")
   output3 = output4.split('{\"data\":{\"searchPages\":[{')
   output3.pop(0)
-  print(f"3 {str(output3[0])}")
+  print(f"3 {output3[0]}")
   print("\n")
   output.pop(0)
-  output.insert(0, str(output4))
+  output.insert(0, str(output3[0]))
   print("\n")
   print(f"4 {output[0:8]}")
-  output2 = np.append(output2, output)  # Assign the result back to output2
+  output2 = np.append(output2, output[0:8])  # Assign the result back to output2
   print("\n")
   print(f"5 {output2}")
+  output2 = np.append([1,2,3,4,5,6,7,8,9,10])
+  print("\n")
+  print(f"6 {output2}")
   
