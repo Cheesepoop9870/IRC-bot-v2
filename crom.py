@@ -50,9 +50,10 @@ if __name__ == "__main__":
       if urlcount == 2:
         coords = x
         break
-  for x in range (0, len(output)-1):
-    print(f"{x} {output[x]}")
-    output.pop(coords+x)
+  for x in range (len(output)-1, 0, -1):
+    if coords+x < len(output):
+      print(f"{x} {output[x]}")
+      output.pop(coords+x)
 
   print("\n")
   output2 = np.array([])  # Initialize as empty 1D array
