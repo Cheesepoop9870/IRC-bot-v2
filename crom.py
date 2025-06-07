@@ -31,7 +31,7 @@ def wikisearch(query):
     }
     response = requests.post(url=url, json={"query": body, "variables": variables2})
     if response.status_code == 200:
-      return response.content
+      return response.content.decode('utf-8')
     else: 
       return f"Error {response.status_code}"
 
