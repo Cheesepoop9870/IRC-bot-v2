@@ -18,7 +18,7 @@ deploymentTarget = "cloudrun"
 
 [[workflows.workflow]]
 name = "crom"
-mode = "sequential"
+mode = "parallel"
 author = 30770619
 
 [[workflows.workflow.tasks]]
