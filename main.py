@@ -299,7 +299,7 @@ try:
 
             # Join channel after first PING (server ready)
             if not joined:
-                handle.write('PRIVMSG NickServ :identify Ilovestarwars321?\r\n') #remember to hide password
+                handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
                 time.sleep(2)
                 for x in range(0, len(channel_list)):
                     handle.write(f'JOIN {channel_list[x]}\r\n')
