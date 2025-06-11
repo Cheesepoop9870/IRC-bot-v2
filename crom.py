@@ -1,8 +1,47 @@
 import requests
-import numpy as np
-
+import json
 output = []
 url = "https://api.crom.avn.sh"
+
+aubody = """
+query Search($query: String!) {
+  searchUsers(query: $query, filter: {anyBaseUrl: "http://scp-wiki.wikidot.com"}) {
+    wikidotInfo {
+      displayName
+      wikidotId
+    }
+    statistics{
+      rank
+      meanRating
+      totalRating
+      pageCount
+      pageCountScp
+      pageCountTale
+      pageCountGoiFormat
+      pageCountArtwork
+    }
+    authorInfos {
+      authorPage {
+        wikidotInfo{
+          title
+        }
+      	url
+      }
+    }
+    attributedPages(sort: { key: CREATED_AT, order: DESC }, first: 1) {
+          edges {
+            node {
+              url
+              wikidotInfo {
+                title
+                rating
+              }
+            }
+  				}
+		}
+  }
+}
+"""
 
 body = """
 query Search($query: String!, $noAttributions: Boolean!) {
@@ -14,7 +53,9 @@ query Search($query: String!, $noAttributions: Boolean!) {
       createdAt
       voteCount
       commentCount
-      
+    }
+    alternateTitles {
+      title
     }
     attributions @skip(if: $noAttributions) {
       type
@@ -27,6 +68,14 @@ query Search($query: String!, $noAttributions: Boolean!) {
 }
 """
 
+
+def addplus(arg):
+    if arg > 0:
+        return f"+{arg}"
+    else:
+        return f"{arg}"
+
+
 def wikisearch(query):
     variables2 = {
       'query': f'{query}',  # term
@@ -34,76 +83,80 @@ def wikisearch(query):
     }
     response = requests.post(url=url, json={"query": body, "variables": variables2})
     if response.status_code == 200:
-      return response.content.decode('utf-8')
+      output = response.content.decode('utf-8')
+      output2 = json.loads(output)
+      output3 = []
+      output4 = {}
+      output3.append(output2["data"]["searchPages"][0]["url"]) 
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["title"])
+      output3.append(output2["data"]["searchPages"][0]["alternateTitles"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["rating"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["voteCount"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["createdAt"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["commentCount"])
+      output3.append(output2["data"]["searchPages"][0]["attributions"])
+      #url, title, title2, rating, total votes, created at, total comments, authors
+      output4 = {
+        "url": output3[0],
+        "title": output3[1],
+        "title2": output3[2],
+        "rating": f"{addplus(output3[3])} (+{output3[3] + abs(output3[3]-output3[4])}/-{abs(output3[3]-output3[4])})", #full rating (+upvotes/-downvotes)
+        "createdAt": " ".join(output3[5].split("T"))[0:len(" ".join(output3[5].split("T")))-2],
+        "comments": output3[6],
+        "authors": output3[7]
+      }
+      return dict(output4)
     else: 
       return f"Error {response.status_code}"
 
+
+def ausearch(query):
+  variables2 = {
+    'query': f'{query}',  # term
+  }
+  response = requests.post(url=url, json={"query": aubody, "variables": variables2})
+  if response.status_code == 200:
+    output = response.content.decode('utf-8')
+    output2 = json.loads(output)
+    output3 = []
+    output4 = {}
+    output3.append(output2["data"]["searchUsers"][0]["wikidotInfo"]["displayName"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["rank"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["meanRating"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["totalRating"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCount"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountScp"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountTale"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountGoiFormat"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountArtwork"])
+    output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["url"])
+    output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["wikidotInfo"]["title"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["url"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["title"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["rating"])
+    #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
+    output4 = {
+      "name": output3[0],
+      "rank": output3[1],
+      "meanRating": output3[2],
+      "totalRating": output3[3],
+      "pageCount": output3[4],
+      "pageCountScp": output3[5],
+      "pageCountTale": output3[6],
+      "pageCountGoiFormat": output3[7],
+      "pageCountArtwork": output3[8],
+      "pageCountOther": output3[4] - output3[5] - output3[6] - output3[7] - output3[8], #other count
+      "authorPageUrl": output3[9],
+      "authorPageTitle": output3[10],
+      "lastPageUrl": output3[11],
+      "lastPageTitle": output3[12],
+      "lastPageRating": output3[13]
+    }
+    return output4
+    
 if __name__ == "__main__":
-  output = wikisearch("8981").split(",")
-  print(f"-1 {output}")
-  print("\n")
-  urlcount = 0
-  coords = 0
-  print(len(output))
-  for x in range (0, len(output)):
-    print(f"{x} {output[x]}")
-    if "url" in output[x]:
-      urlcount = urlcount + 1
-      if urlcount == 2:
-        coords = x
-        break
-  print("\n")
-  if urlcount >= 2:
-    for x in range (len(output)-1, 0, -1):
-      if coords+x < len(output):
-        print(f"{x} {output[x]}")
-        output.pop(coords+x)
-  else:
-    coords = len(output)
-  print("\n")
-  output2 = np.array([])  # Initialize as empty 1D array
-  output3 = []
-  print(f"0 {output}")
-  print("\n")
-  print(f"1 {output[0]}")
-  print("\n")
-  print(f"2 {output[0:5+(coords-5)]}")
-  output4 = output[0]
-  print("\n")
-  output3 = output4.split('{\"data\":{\"searchPages\":[{')
-  output3.pop(0)
-  print(f"3 {output3[0]}")
-  print("\n")
-  output.pop(0)
-  output.insert(0, str(output3[0]))
-  print("\n")
-  print(f"4 {output[0:5+(coords-5)]}")
-  output2 = np.append(output2, output[0:5+(coords-5)])  # Assign the result back to output2
-  print("\n")
-  print(f"5 {output2}")
-  ########################################
-  print("\n")
-  print(f"6 {output2}")
-  print("\n")
-  for x in range(0, len(output2)):
-    print(f"{x} {output2[x]}")
-  print("\n")
-  output4 = output2[1]
-  output3 = output4.split('\"wikidotInfo\":{')
-  output3.pop(0)
-  print(f"7 {output3}")
-  output2[1] = output3[0]
-  print("\n")
-  print(f"8 {output2}")
-  print("\n")
-  for x in range(0, len(output2)):
-    print(f"{x} {output2[x]}")
-  print("\n")
-  output4 = output2[6]
-  output3 = output4.split('\"attributions\":[{')
-  output3.pop(0)
-  print(f"9 {output3}")
-  print("\n")
-  output2[6] = output3[0]
-  for x in range(0, len(output2)):
-    print(f"{x} {output2[x]}")
+  output = ausearch("Pouf")
+  print(output)
+
+
+  

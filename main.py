@@ -1,14 +1,12 @@
-import json
 import random as r
 import re
-import requests
 import socket
 import ssl
 import sys
 import time
 from local_googlesearch_python import search
-
-
+from crom import wikisearch
+import os
 
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
@@ -21,39 +19,6 @@ nick = 'Mando-Bot'
 realname = 'v1.2.6-alpha'  # This will be displayed in WHOIS
 port = 6697
 channel_list = ["#cheesepoop9870",] #facility36",]
-
-#crom api
-
-def wikisearch(query):
-    url = "https://api.crom.avn.sh"
-    body = """
-    query Search($query: String!, $noAttributions: Boolean!) {
-      searchPages(query: $query, filter: { anyBaseUrl: "http://scp-wiki.wikidot.com" }) {
-        url
-        wikidotInfo {
-          title
-          rating
-          createdAt
-        }
-        attributions @skip(if: $noAttributions) {
-          type
-          user {
-            name
-          }
-        }
-      }
-    }
-    """
-    variables2 = {
-      'query': f'{query}',  # term
-      'noAttributions': False
-    }
-    response = requests.post(url=url, json={"query": body, "variables": variables2})
-    if response.status_code == 200:
-      return json.loads(response.content)
-    else: 
-      return f"Error {response.status_code}. If 5XX, try again later, if 4XX, tell cheese."
-
 
 
 # List of admin usernames who can use privileged commands
@@ -279,14 +244,40 @@ def handle_command(command, args, handle, sender, channel_debug):
         send_message(channel_debug, f'{sender}: {output[r.randint(0, len(output)-1)]}')    
         
     elif command == "search" or command == "s":
-        output = wikisearch(" ".join(args))
-        debug(0, output)
-        send_message(channel_debug, f'{sender}: {output}')
+        try:
+            output = wikisearch(" ".join(args))
+            output2 = ""
+            output3 = []
+            debug(0, output)
+            if output["title2"] == []: #no alt title
+                output["title2"] = ""
+                output["title"] = f"{output['title']},"
+            else:
+                output["title"] = f"{output['title']}:"
+                output_str = dict(output["title2"][0])["title"]
+                output_str = f"{output_str},"
+            for x in range(0, len(output["authors"])):
+                output3.append(dict(output["authors"][x])["user"]["name"])
+            send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+        except Exception:
+            send_message(channel_debug, f'{sender}: No results found!')
 
     elif command == "raw":
         if sender in ADMIN_USERS:
+            args = " ".join(args)
             handle.write(f'{args}\r\n')
             handle.flush()
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+    elif command == "refresh":
+        if sender in ADMIN_USERS:
+            handle.write("QUIT :Refreshing\r\n")
+            handle.flush()
+            os.system("python3 main.py")
+            sys.exit(0)
+        else:
+            send_message(channel_debug, "Sorry, you are not authorized to use this command.")
+            
 
 ##################################################################################
 ##################################################################################
@@ -350,7 +341,8 @@ try:
             history_channel = line #may break
             if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
                 history_bypass = 1
-                send_message(channel_temp, 'History cleared!')
+                handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
+                handle.flush()
 except Exception as e:
     print(f"Error: {e}")
     # break
