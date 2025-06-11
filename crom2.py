@@ -17,8 +17,8 @@ def latest():
     if i + 2 < len(data_without_header):  # Make sure we have all 3 elements
       output2.append(data_without_header[i:i+3])
   output3 = []
-  for i in range(0, len(output2)):
-    output3.append(wikisearch(latest()[i][0]))
-  return output3[:5]
+  for i in range(0, min(5, len(output2))):  # Limit to 5 items
+    output3.append(wikisearch(output2[i][0]))  # Use output2 instead of latest()
+  return output3
 if __name__ == "__main__":
   print(latest())
