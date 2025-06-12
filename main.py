@@ -5,8 +5,8 @@ import ssl
 import sys
 import time
 from local_googlesearch_python import search
-from crom import wikisearch
-
+from crom import wikisearch, ausearch, latest
+import os
 
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
@@ -249,18 +249,21 @@ def handle_command(command, args, handle, sender, channel_debug):
             output2 = ""
             output3 = []
             debug(0, output)
-            if output["title2"] == []:
+            if output["title2"] == []: #no alt title
                 output["title2"] = ""
                 output["title"] = f"{output['title']},"
             else:
                 output["title"] = f"{output['title']}:"
                 output_str = dict(output["title2"][0])["title"]
+                output_str = f"{output_str},"
             for x in range(0, len(output["authors"])):
                 output3.append(dict(output["authors"][x])["user"]["name"])
-            send_message(channel_debug, f"{sender}: {output['title']} {output_str} written {output['createdAt']} ago by {' '.join(output3)} with {output['rating']} and {output['comments']} comments. {output['url']}")
-        except Exception:
+            send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+        except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
-
+            return
+        except Exception as e:
+            send_message(channel_debug, f'{sender}: Error! String: {e}')
     elif command == "raw":
         if sender in ADMIN_USERS:
             args = " ".join(args)
@@ -268,7 +271,46 @@ def handle_command(command, args, handle, sender, channel_debug):
             handle.flush()
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-
+    elif command == "refresh":
+        if sender in ADMIN_USERS:
+            handle.write("QUIT :Refreshing\r\n")
+            handle.flush()
+            os.system("python3 main.py")
+            sys.exit(0)
+        else:
+            send_message(channel_debug, "Sorry, you are not authorized to use this command.")
+    elif command == "author" or command == "au":
+        try:
+            output = ausearch(" ".join(args)) 
+            #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
+            send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+        except IndexError:
+            send_message(channel_debug, f'{sender}: No results found!')
+            return
+        except Exception as e:
+            send_message(channel_debug, f'{sender}: Error! String: {e}')
+    elif command == "latest":
+            for x in range(0, 3):
+                try:
+                    output = latest()[x]
+                    output2 = ""
+                    output3 = []
+                    debug(0, output)
+                    if output["title2"] == []: #no alt title
+                        output["title2"] = ""
+                        output["title"] = f"{output['title']},"
+                    else:
+                        output["title"] = f"{output['title']}:"
+                        output_str = dict(output["title2"][0])["title"]
+                        output_str = f"{output_str},"
+                    for x in range(0, len(output["authors"])):
+                        output3.append(dict(output["authors"][x])["user"]["name"])
+                    send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+                except IndexError:
+                    send_message(channel_debug, f'{sender}: No results found!')
+                    return
+                except Exception as e:
+                    send_message(channel_debug, f'{sender}: Error! String: {e}')
 ##################################################################################
 ##################################################################################
 
