@@ -5,7 +5,7 @@ import ssl
 import sys
 import time
 from local_googlesearch_python import search
-from crom import wikisearch
+from crom import wikisearch, ausearch, latest
 import os
 
 #for infinite rolls
@@ -259,9 +259,11 @@ def handle_command(command, args, handle, sender, channel_debug):
             for x in range(0, len(output["authors"])):
                 output3.append(dict(output["authors"][x])["user"]["name"])
             send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
-        except Exception:
+        except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
-
+            return
+        except Exception as e:
+            send_message(channel_debug, f'{sender}: Error! String: {e}')
     elif command == "raw":
         if sender in ADMIN_USERS:
             args = " ".join(args)
@@ -277,8 +279,41 @@ def handle_command(command, args, handle, sender, channel_debug):
             sys.exit(0)
         else:
             send_message(channel_debug, "Sorry, you are not authorized to use this command.")
-            
-
+    elif command == "author" or command == "au":
+        try:
+            output = ausearch(" ".join(args)) 
+            #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
+            if output["authorPageUrl"] != "":
+                send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+            else:
+                send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+        except IndexError:
+            send_message(channel_debug, f'{sender}: No results found!')
+            return
+        except Exception as e:
+            send_message(channel_debug, f'{sender}: Error! String: {e}')
+    elif command == "latest":
+            for x in range(0, 3):
+                try:
+                    output = latest()[x]
+                    output2 = ""
+                    output3 = []
+                    debug(0, output)
+                    if output["title2"] == []: #no alt title
+                        output["title2"] = ""
+                        output["title"] = f"{output['title']},"
+                    else:
+                        output["title"] = f"{output['title']}:"
+                        output_str = dict(output["title2"][0])["title"]
+                        output_str = f"{output_str},"
+                    for x in range(0, len(output["authors"])):
+                        output3.append(dict(output["authors"][x])["user"]["name"])
+                    send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+                except IndexError:
+                    send_message(channel_debug, f'{sender}: No results found!')
+                    return
+                except Exception as e:
+                    send_message(channel_debug, f'{sender}: Error! String: {e}')
 ##################################################################################
 ##################################################################################
 
@@ -357,3 +392,4 @@ finally:
         sys.exit(1)
     except:
         pass
+# HIDE PASSWORD

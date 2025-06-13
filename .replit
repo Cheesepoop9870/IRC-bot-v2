@@ -15,7 +15,6 @@ run = ["python3", "main.py"]
 deploymentTarget = "cloudrun"
 
 [workflows]
-runButton = "crom2"
 
 [[workflows.workflow]]
 name = "crom"
@@ -34,3 +33,12 @@ author = 30770619
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 crom2.py"
+
+[[workflows.workflow]]
+name = "new"
+mode = "parallel"
+author = 30770619
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 new.py"

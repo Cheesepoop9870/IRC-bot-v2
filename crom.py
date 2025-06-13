@@ -1,5 +1,6 @@
 import requests
 import json
+from bs4 import BeautifulSoup
 output = []
 url = "https://api.crom.avn.sh"
 
@@ -35,6 +36,7 @@ query Search($query: String!) {
               wikidotInfo {
                 title
                 rating
+                voteCount
               }
             }
   				}
@@ -129,17 +131,23 @@ def ausearch(query):
     output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountTale"])
     output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountGoiFormat"])
     output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountArtwork"])
-    output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["url"])
-    output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["wikidotInfo"]["title"])
+    if output2["data"]["searchUsers"][0]["authorInfos"] == []: #no author page
+      output3.append("")
+      output3.append("")
+    else:
+      output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["url"])
+      output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["wikidotInfo"]["title"])
     output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["url"])
     output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["title"])
     output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["rating"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["voteCount"])
     #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
+    
     output4 = {
       "name": output3[0],
       "rank": output3[1],
-      "meanRating": output3[2],
-      "totalRating": output3[3],
+      "meanRating": addplus(output3[2]),
+      "totalRating": addplus(output3[3]),
       "pageCount": output3[4],
       "pageCountScp": output3[5],
       "pageCountTale": output3[6],
@@ -150,12 +158,33 @@ def ausearch(query):
       "authorPageTitle": output3[10],
       "lastPageUrl": output3[11],
       "lastPageTitle": output3[12],
-      "lastPageRating": output3[13]
+      "lastPageRating": f"{addplus(output3[13])} (+{output3[13] + abs(output3[13]-output3[14])}/-{abs(output3[13]-output3[14])})"
     }
     return output4
-    
+
+def latest():
+  URL = "https://scp-wiki.wikidot.com/most-recently-created"
+  r = requests.get(URL)
+  soup = BeautifulSoup(r.content, 'html5lib')
+  html = soup.find_all('div', attrs = {'class':'list-pages-box'})
+  output = html[2].text.strip().split("\n")
+  output =  [item for item in output if item]
+  # Skip the header (first 3 elements) and group every 3 elements
+  data_without_header = output[3:]  # Remove header elements
+  output2 = []
+
+  # Group every 3 elements into sublists
+  for i in range(0, len(data_without_header), 3):
+    if i + 2 < len(data_without_header):  # Make sure we have all 3 elements
+      output2.append(data_without_header[i:i+3])
+  output3 = []
+  for i in range(0, min(5, len(output2))):  # Limit to 5 items
+    output3.append(wikisearch(output2[i][0]))  # Use output2 instead of latest()
+  
+  return output3
 if __name__ == "__main__":
-  output = ausearch("Pouf")
+  output = ausearch("thew")
+  print(type(output))
   print(output)
 
 
