@@ -37,6 +37,7 @@ def handle_command(command, args, handle, sender, channel_debug):
     #message splitting function
     def send_message(channel, message):
         if len(message) <= 433:
+            print(f'PRIVMSG {channel} :{message}')
             handle.write(f'PRIVMSG {channel} :{message}\r\n')
             handle.flush()
         else:
@@ -54,6 +55,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             
             # Send each chunk
             for chunk in chunks:
+                print(f'PRIVMSG {channel} :{chunk}')
                 handle.write(f'PRIVMSG {channel} :{chunk}\r\n')
                 handle.flush()
 
