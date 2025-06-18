@@ -1,4 +1,4 @@
-
+#note: this is deprecated, use crom.py instead
 import requests
 from bs4 import BeautifulSoup
 from crom import wikisearch
