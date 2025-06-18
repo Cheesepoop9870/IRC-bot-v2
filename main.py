@@ -5,7 +5,8 @@ import ssl
 import sys
 import time
 from local_googlesearch_python import search
-from crom import wikisearch, ausearch, latest
+from crom import wikisearch, ausearch
+from crom2 import latest
 import os
 
 #for infinite rolls
