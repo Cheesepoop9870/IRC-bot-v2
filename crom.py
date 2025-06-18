@@ -99,6 +99,28 @@ def stop_background_cache():
     _cache_running = False
     print("Background cache refresh stopped")
 
+def refresh_cache():
+    """Manually refresh the cache with fresh data"""
+    global _cache
+    print("Manually refreshing cache...")
+    
+    # Clear existing cache
+    cache_key = "latest_articles"
+    if cache_key in _cache:
+        del _cache[cache_key]
+    
+    # Fetch fresh data
+    results = _fetch_latest_data()
+    
+    if results:
+        # Cache the new results
+        _cache[cache_key] = (results, time.time())
+        print(f"Cache manually refreshed with {len(results)} articles")
+        return results
+    else:
+        print("Failed to refresh cache - no data retrieved")
+        return []
+
 aubody = """
 query Search($query: String!) {
   searchUsers(query: $query, filter: {anyBaseUrl: "http://scp-wiki.wikidot.com"}) {
