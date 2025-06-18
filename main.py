@@ -25,6 +25,8 @@ channel_list = ["#cheesepoop9870",] #facility36",]
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza"} # Add admin usernames here
 
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
+latest_range = 3 # 3 = 3 results, 5 = 5 results, etc.
+
 
 def handle_command(command, args, handle, sender, channel_debug):
     
@@ -229,17 +231,31 @@ def handle_command(command, args, handle, sender, channel_debug):
             send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
             
     elif command == "!flags":
-        if " ".join(args) == "debug":
-            if sender in ADMIN_USERS:
-                global debug_flag
-                debug_flag = debug_flag + 1
-                if debug_flag > 1:
-                    debug_flag = 0
-                send_message(channel_debug, f'Debug mode = {debug_flag}')
-                debug("", "r")
-            else:
-                send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-                
+        if args[0] == "set":
+            if args[1] == "debug":
+                if sender in ADMIN_USERS:
+                    global debug_flag
+                    debug_flag = debug_flag + 1
+                    if debug_flag > 1:
+                        debug_flag = 0
+                    send_message(channel_debug, f'Debug mode = {debug_flag}')
+                    debug("", "check")
+                else:
+                    send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+            
+            elif args[1] == "latest_range":
+                if sender in ADMIN_USERS:
+                    global latest_range
+                    latest_range = args[2]
+                    try:
+                        if int(latest_range) > 5:
+                            send_message(channel_debug, 'Error! latest_range cannot be greater than 5')
+                        send_message(channel_debug, f'Latest search range = {latest_range}')
+                    except ValueError:
+                        send_message(channel_debug, 'Error! latest_range must be an integer')
+                else:
+                    send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+                    
     elif command == "ch" or command == "choose":
         output_str = " ".join(args)
         output = output_str.split(",")
@@ -251,6 +267,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             output2 = ""
             output3 = []
             debug(0, output)
+            #note: errors are intentional, they wont cause a problem
             if output["title2"] == []: #no alt title
                 output["title2"] = ""
                 output["title"] = f"{output['title']},"
@@ -266,6 +283,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
+            
     elif command == "raw":
         if sender in ADMIN_USERS:
             args = " ".join(args)
@@ -273,6 +291,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             handle.flush()
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+            
     elif command == "refresh":
         if sender in ADMIN_USERS:
             handle.write("QUIT :Refreshing\r\n")
@@ -281,10 +300,12 @@ def handle_command(command, args, handle, sender, channel_debug):
             sys.exit(0)
         else:
             send_message(channel_debug, "Sorry, you are not authorized to use this command.")
+            
     elif command == "author" or command == "au":
         try:
             output = ausearch(" ".join(args)) 
             #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
+            #note: errors are intentional, they wont cause a problem
             if output["authorPageUrl"] != "":
                 send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
             else:
@@ -294,8 +315,8 @@ def handle_command(command, args, handle, sender, channel_debug):
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
-    elif command == "latest":
-            for x in range(0, 3):
+    elif command == "latest" or command == "l":
+            for x in range(0, int(latest_range)):
                 try:
                     output = latest()[x]
                     output2 = ""
@@ -392,6 +413,6 @@ finally:
         handle.write('QUIT :\r\n')
         handle.flush()
         sys.exit(1)
-    except:
+    except Exception:
         pass
 # HIDE PASSWORD
