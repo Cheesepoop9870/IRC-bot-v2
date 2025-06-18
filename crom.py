@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import asyncio
 import aiohttp
 import time
+import threading
 from typing import List, Dict, Any
 output = []
 url = "https://api.crom.avn.sh"
@@ -11,9 +12,92 @@ url = "https://api.crom.avn.sh"
 # Simple in-memory cache
 _cache = {}
 CACHE_DURATION = 300  # 5 minutes
+_cache_thread = None
+_cache_running = False
 
 def is_cache_valid(timestamp: float) -> bool:
     return time.time() - timestamp < CACHE_DURATION
+
+def _fetch_latest_data():
+    """Internal function to fetch latest data without cache checks"""
+    try:
+        URL = "https://scp-wiki.wikidot.com/most-recently-created"
+        r = requests.get(URL)
+        soup = BeautifulSoup(r.content, 'html5lib')
+        html = soup.find_all('div', attrs={'class': 'list-pages-box'})
+        output = html[2].text.strip().split("\n")
+        output = [item for item in output if item]
+        
+        # Skip the header (first 3 elements) and group every 3 elements
+        data_without_header = output[3:]  # Remove header elements
+        output2 = []
+        
+        # Group every 3 elements into sublists
+        for i in range(0, len(data_without_header), 3):
+            if i + 2 < len(data_without_header):  # Make sure we have all 3 elements
+                output2.append(data_without_header[i:i+3])
+        
+        # Get article names for parallel fetching
+        article_names = [output2[i][0] for i in range(min(5, len(output2)))]
+        
+        # Fetch articles in parallel using asyncio
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            results = loop.run_until_complete(fetch_latest_parallel(article_names))
+            loop.close()
+        except Exception as e:
+            print(f"Error in parallel fetch: {e}")
+            # Fallback to sequential method
+            results = []
+            for name in article_names:
+                try:
+                    result = wikisearch(name)
+                    if result:
+                        results.append(result)
+                except:
+                    continue
+        
+        return results
+    except Exception as e:
+        print(f"Error fetching latest data: {e}")
+        return []
+
+def _background_cache_refresh():
+    """Background thread function to refresh cache every 5 minutes"""
+    global _cache_running
+    while _cache_running:
+        try:
+            print("Background: Refreshing cache...")
+            results = _fetch_latest_data()
+            if results:
+                _cache["latest_articles"] = (results, time.time())
+                print(f"Background: Cache updated with {len(results)} articles")
+            else:
+                print("Background: Failed to fetch new data, keeping existing cache")
+        except Exception as e:
+            print(f"Background cache refresh error: {e}")
+        
+        # Wait 5 minutes before next refresh
+        for _ in range(300):  # 300 seconds = 5 minutes
+            if not _cache_running:
+                break
+            time.sleep(1)
+
+def start_background_cache():
+    """Start the background cache refresh thread"""
+    global _cache_thread, _cache_running
+    if not _cache_running:
+        _cache_running = True
+        _cache_thread = threading.Thread(target=_background_cache_refresh, daemon=True)
+        _cache_thread.start()
+        print("Background cache refresh started")
+
+def stop_background_cache():
+    """Stop the background cache refresh thread"""
+    global _cache_running
+    _cache_running = False
+    print("Background cache refresh stopped")
 
 aubody = """
 query Search($query: String!) {
@@ -223,6 +307,9 @@ async def fetch_latest_parallel(article_names: List[str]) -> List[Dict[str, Any]
         return valid_results
 
 def latest():
+    # Start background cache refresh if not already running
+    start_background_cache()
+    
     # Check cache first
     cache_key = "latest_articles"
     if cache_key in _cache:
@@ -231,43 +318,9 @@ def latest():
             print("Using cached data")
             return cached_data
     
+    # If no valid cache, fetch fresh data immediately
     print("Fetching fresh data...")
-    URL = "https://scp-wiki.wikidot.com/most-recently-created"
-    r = requests.get(URL)
-    soup = BeautifulSoup(r.content, 'html5lib')
-    html = soup.find_all('div', attrs={'class': 'list-pages-box'})
-    output = html[2].text.strip().split("\n")
-    output = [item for item in output if item]
-    
-    # Skip the header (first 3 elements) and group every 3 elements
-    data_without_header = output[3:]  # Remove header elements
-    output2 = []
-    
-    # Group every 3 elements into sublists
-    for i in range(0, len(data_without_header), 3):
-        if i + 2 < len(data_without_header):  # Make sure we have all 3 elements
-            output2.append(data_without_header[i:i+3])
-    
-    # Get article names for parallel fetching
-    article_names = [output2[i][0] for i in range(min(5, len(output2)))]
-    
-    # Fetch articles in parallel using asyncio
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        results = loop.run_until_complete(fetch_latest_parallel(article_names))
-        loop.close()
-    except Exception as e:
-        print(f"Error in parallel fetch: {e}")
-        # Fallback to sequential method
-        results = []
-        for name in article_names:
-            try:
-                result = wikisearch(name)
-                if result:
-                    results.append(result)
-            except:
-                continue
+    results = _fetch_latest_data()
     
     # Cache the results
     _cache[cache_key] = (results, time.time())
