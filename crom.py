@@ -15,6 +15,8 @@ CACHE_DURATION = 300  # 5 minutes
 _cache_thread = None
 _cache_running = False
 
+
+
 def is_cache_valid(timestamp: float) -> bool:
     return time.time() - timestamp < CACHE_DURATION
 
@@ -48,6 +50,7 @@ def _fetch_latest_data():
             loop.close()
         except Exception as e:
             print(f"Error in parallel fetch: {e}")
+            print("Falling back to sequential method")
             # Fallback to sequential method
             results = []
             for name in article_names:
@@ -98,12 +101,10 @@ def stop_background_cache():
     global _cache_running
     _cache_running = False
     print("Background cache refresh stopped")
-
 def refresh_cache():
     """Manually refresh the cache with fresh data"""
     global _cache
     print("Manually refreshing cache...")
-    
     # Clear existing cache
     cache_key = "latest_articles"
     if cache_key in _cache:
@@ -219,7 +220,7 @@ def wikisearch(query):
         "url": output3[0],
         "title": output3[1],
         "title2": output3[2],
-        "rating": f"{addplus(output3[3])} (+{output3[3] + abs(output3[3]-output3[4])}/-{abs(output3[3]-output3[4])})", #full rating (+upvotes/-downvotes)
+        "rating": f"{addplus(output3[3])} (+{(output3[3] + output3[4])/2}/-{(output3[3] - output3[4])/2})", #full rating (+upvotes/-downvotes)
         "createdAt": " ".join(output3[5].split("T"))[0:len(" ".join(output3[5].split("T")))-2],
         "comments": output3[6],
         "authors": output3[7]
@@ -275,7 +276,7 @@ def ausearch(query):
       "authorPageTitle": output3[10],
       "lastPageUrl": output3[11],
       "lastPageTitle": output3[12],
-      "lastPageRating": f"{addplus(output3[13])} (+{output3[13] + abs(output3[13]-output3[14])}/-{abs(output3[13]-output3[14])})"
+      "lastPageRating": f"{addplus(output3[13])} (+{(output3[13] + output3[14])/2}/-{(output3[13] - output3[14])/2})"
     }
     return output4
 
@@ -301,7 +302,7 @@ async def wikisearch_async(session: aiohttp.ClientSession, query: str) -> Dict[s
                     "url": page_data["url"],
                     "title": page_data["wikidotInfo"]["title"],
                     "title2": page_data["alternateTitles"],
-                    "rating": f"{addplus(rating)} (+{rating + abs(rating-vote_count)}/-{abs(rating-vote_count)})",
+                    "rating": f"{addplus(rating)} (+{(rating + vote_count)/2}/-{(rating - vote_count)/2})",
                     "createdAt": " ".join(page_data["wikidotInfo"]["createdAt"].split("T"))[0:len(" ".join(page_data["wikidotInfo"]["createdAt"].split("T")))-2],
                     "comments": page_data["wikidotInfo"]["commentCount"],
                     "authors": page_data["attributions"]
