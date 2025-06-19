@@ -292,9 +292,9 @@ def handle_command(command, args, handle, sender, channel_debug):
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
             
-    elif command == "refresh":
+    elif command == "reboot":
         if sender in ADMIN_USERS:
-            handle.write("QUIT :Refreshing\r\n")
+            handle.write("QUIT :Rebooting\r\n")
             handle.flush()
             os.system("python3 main.py")
             sys.exit(0)
@@ -338,7 +338,8 @@ def handle_command(command, args, handle, sender, channel_debug):
                 except Exception as e:
                     send_message(channel_debug, f'{sender}: Error! String: {e}')
                     
-    elif command == "reload_db":
+    elif command == "refresh":
+        send_message(channel_debug, f'{sender}: Manually refreshing cache...')
         refresh_cache()
         send_message(channel_debug, f'{sender}: Cache refreshed!')
         #add db.py commands here too
@@ -346,79 +347,80 @@ def handle_command(command, args, handle, sender, channel_debug):
 ##################################################################################
 ##################################################################################
 
-try:
-    # Create socket and wrap with SSL
-    context = ssl.create_default_context()
-    ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ircsock = context.wrap_socket(ircsock, server_hostname=server)
-    ircsock.connect((server, port))
-    handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
-
-    print('NICK', nick, file=handle)
-    print('USER', nick, nick, nick, ':'+realname, file=handle)
-
-
-    joined = False
-    history_bypass = 0
-    while True:
-        line = handle.readline().strip()
-        print(line)
-
-
-        # Check for PING and respond with PONG
-        if "PING" in line:
-            pong = "PONG :" + line.split(':')[1]
-            handle.write(pong + '\r\n')
-            handle.flush()
-
-            # Join channel after first PING (server ready)
-            if not joined:
-                handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
-                time.sleep(2)
-                for x in range(0, len(channel_list)):
-                    handle.write(f'JOIN {channel_list[x]}\r\n')
-                handle.write(f'MODE {nick} :+B\r\n')
-                handle.flush()
-                joined = True
-            continue
-
-        # Check for PRIVMSG (chat messages)
-        if "PRIVMSG" in line and ':!' in line:
-            # Extract the sender's nickname
-            sender = line.split('!')[0][1:]
-            # Extract the channel
-            channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
-            # Extract the command part
-
-            msg_parts = line.split(':!')
-            if len(msg_parts) > 1:
-                # Split command and arguments
-                cmd_parts = msg_parts[1].split()
-                command = cmd_parts[0].lower()
-                args = cmd_parts[1:] if len(cmd_parts) > 1 else []
-
-                # Handle the command
-                if history_bypass == 1:
-                    if handle_command(command, args, handle, sender, channel_temp):
-                        break
-            history_check = line.split(":!!clear")
-            history_channel = line #may break
-            if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
-                history_bypass = 1
-                handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
-                handle.flush()
-except Exception as e:
-    print(f"Error: {e}")
-    # break
-finally:
+if __name__ == "__main__":
     try:
+        # Create socket and wrap with SSL
         context = ssl.create_default_context()
         ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ircsock = context.wrap_socket(ircsock)
+        ircsock = context.wrap_socket(ircsock, server_hostname=server)
+        ircsock.connect((server, port))
         handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
-        handle.write('QUIT :\r\n')
-        handle.flush()
-        sys.exit(1)
-    except Exception:
-        pass
+
+        print('NICK', nick, file=handle)
+        print('USER', nick, nick, nick, ':'+realname, file=handle)
+
+
+        joined = False
+        history_bypass = 0
+        while True:
+            line = handle.readline().strip()
+            print(line)
+
+
+            # Check for PING and respond with PONG
+            if "PING" in line:
+                pong = "PONG :" + line.split(':')[1]
+                handle.write(pong + '\r\n')
+                handle.flush()
+
+                # Join channel after first PING (server ready)
+                if not joined:
+                    handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
+                    time.sleep(2)
+                    for x in range(0, len(channel_list)):
+                        handle.write(f'JOIN {channel_list[x]}\r\n')
+                    handle.write(f'MODE {nick} :+B\r\n')
+                    handle.flush()
+                    joined = True
+                continue
+
+            # Check for PRIVMSG (chat messages)
+            if "PRIVMSG" in line and ':!' in line:
+                # Extract the sender's nickname
+                sender = line.split('!')[0][1:]
+                # Extract the channel
+                channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
+                # Extract the command part
+
+                msg_parts = line.split(':!')
+                if len(msg_parts) > 1:
+                    # Split command and arguments
+                    cmd_parts = msg_parts[1].split()
+                    command = cmd_parts[0].lower()
+                    args = cmd_parts[1:] if len(cmd_parts) > 1 else []
+
+                    # Handle the command
+                    if history_bypass == 1:
+                        if handle_command(command, args, handle, sender, channel_temp):
+                            break
+                history_check = line.split(":!!clear")
+                history_channel = line #may break
+                if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
+                    history_bypass = 1
+                    handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
+                    handle.flush()
+    except Exception as e:
+        print(f"Error: {e}")
+        # break
+    finally:
+        try:
+            context = ssl.create_default_context()
+            ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ircsock = context.wrap_socket(ircsock)
+            handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
+            handle.write('QUIT :\r\n')
+            handle.flush()
+            sys.exit(1)
+        except Exception:
+            pass
 # HIDE PASSWORD
