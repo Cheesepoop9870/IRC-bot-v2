@@ -39,27 +39,13 @@ def _fetch_latest_data():
             if i + 2 < len(data_without_header):  # Make sure we have all 3 elements
                 output2.append(data_without_header[i:i+3])
         
-        # Get article names for parallel fetching
+        # Return just the page names without fetching detailed info
         article_names = [output2[i][0] for i in range(min(5, len(output2)))]
         
-        # Fetch articles in parallel using asyncio
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            results = loop.run_until_complete(fetch_latest_parallel(article_names))
-            loop.close()
-        except Exception as e:
-            print(f"Error in parallel fetch: {e}")
-            print("Falling back to sequential method")
-            # Fallback to sequential method
-            results = []
-            for name in article_names:
-                try:
-                    result = wikisearch(name)
-                    if result:
-                        results.append(result)
-                except:
-                    continue
+        # Return simple format with just names
+        results = []
+        for name in article_names:
+            results.append({"title": name})
         
         return results
     except Exception as e:
@@ -302,7 +288,7 @@ async def wikisearch_async(session: aiohttp.ClientSession, query: str) -> Dict[s
                     "url": page_data["url"],
                     "title": page_data["wikidotInfo"]["title"],
                     "title2": page_data["alternateTitles"],
-                    "rating": f"{addplus(rating)} (+{(rating + vote_count)/2}/-{(rating - votecount)/2})",
+                    "rating": f"{addplus(rating)} (+{(rating + vote_count)/2}/-{(rating - vote_count)/2})",
                     "createdAt": " ".join(page_data["wikidotInfo"]["createdAt"].split("T"))[0:len(" ".join(page_data["wikidotInfo"]["createdAt"].split("T")))-2],
                     "comments": page_data["wikidotInfo"]["commentCount"],
                     "authors": page_data["attributions"]
