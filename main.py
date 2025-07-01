@@ -23,7 +23,7 @@ channel_list = ["#cheesepoop9870",] #facility36",]
 
 
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza, PineappleOnSleepza"} # Add admin usernames here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza", "PineappleOnSleepza", } # Add admin usernames here
 
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc.
