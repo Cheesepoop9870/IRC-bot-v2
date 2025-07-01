@@ -30,13 +30,13 @@ latest_range = 3 # 3 = 3 results, 5 = 5 results, etc.
 
 
 def handle_command(command, args, handle, sender, channel_debug, full_host=None):
-    
+
     #debug command
     def debug(var, args):
       if debug_flag == 1:
            handle.write(f'PRIVMSG {channel_debug} :{var} {args}\r\n')
            handle.flush()
-    
+
     #message splitting function
     def send_message(channel, message):
         if len(message) <= 433:
@@ -55,7 +55,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 message = message[split_pos:].lstrip()
             if message:  # Add remaining part
                 chunks.append(message)
-            
+
             # Send each chunk
             for chunk in chunks:
                 print(f'PRIVMSG {channel} :{chunk}')
@@ -66,40 +66,44 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     output = []
     output2 = []
     output_str = ""
-    
+
     #dice stuff bc im lazy
     commandargs = ""
     commandargs2 = []
     commandargsoutput = []
     commandargs3 = []
     cflag_plus_roll = 0
-    
+
     #Handle IRC commands starting with !
     if command == "hello":
         send_message(channel_debug, f'Hello, {sender}!')
-        
+
     elif command == "quit":
-        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+        # Extract just the host part (after @) if full_host exists
+        host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+        if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             handle.write(f'QUIT :Quit command used by {sender} in channel {channel_debug}\r\n')
             handle.flush()
             sys.exit(0)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-            
+
     elif command == "clear":
         send_message(channel_debug, 'Message history cleared!')
-        
+
     elif command == "commands":
         send_message(channel_debug, 'List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands')
-        
+
     elif command == "setup":
-        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+        # Extract just the host part (after @) if full_host exists
+        host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+        if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             send_message(channel_debug, 'Setting up the bot...')
             send_message(channel_debug, 'Bot setup complete!')
             #time.sleep(3)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-            
+
     elif command == "!roll":
         try:
             commandargs = "".join(args)
@@ -138,7 +142,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             cflag_plus_roll = 0
         except IndexError:
             send_message(channel_debug, 'Invalid dice format. use 1d10 or similar')
-            
+
     elif command == "everyone":
         handle.write(f'NAMES {channel_debug}\r\n')
         handle.flush()
@@ -149,7 +153,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f'Users in channel: {names}')
         else:
             send_message(channel_debug, 'Error! if this happenes, tell cheese. Error string: 425/404')
-            
+
     elif command == "join": #add multiple channel support
         handle.write(f'JOIN {args[0]}\r\n')
         channel_list.append(args[0])
@@ -158,9 +162,11 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         else:
           send_message(channel_debug, f'Joined {args[0]}')
         handle.flush()
-        
+
     elif command == "leave": #add multiple channel support
-        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+        # Extract just the host part (after @) if full_host exists
+        host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+        if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             if len(args[0])> 0:
                 handle.write(f'PART {args[0]}\r\n')
                 channel_list.remove(args[0])
@@ -230,11 +236,13 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
         else:
             send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
-            
+
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
-                if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+                # Extract just the host part (after @) if full_host exists
+                host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+                if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
                     global debug_flag
                     debug_flag = debug_flag + 1
                     if debug_flag > 1:
@@ -243,9 +251,11 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     debug("", "check")
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-            
+
             elif args[1] == "latest_range":
-                if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+                # Extract just the host part (after @) if full_host exists
+                host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+                if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
                     global latest_range
                     latest_range = args[2]
                     try:
@@ -256,12 +266,12 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                         send_message(channel_debug, 'Error! latest_range must be an integer')
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-                    
+
     elif command == "ch" or command == "choose":
         output_str = " ".join(args)
         output = output_str.split(",")
         send_message(channel_debug, f'{sender}: {output[r.randint(0, len(output)-1)]}')    
-        
+
     elif command == "search" or command == "s":
         try:
             output = crom.wikisearch(" ".join(args))
@@ -284,24 +294,28 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
-            
+
     elif command == "raw":
-        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+        # Extract just the host part (after @) if full_host exists
+        host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+        if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             args = " ".join(args)
             handle.write(f'{args}\r\n')
             handle.flush()
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-            
+
     elif command == "reboot":
-        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
+        # Extract just the host part (after @) if full_host exists
+        host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+        if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             handle.write("QUIT :Rebooting\r\n")
             handle.flush()
             os.system("python3 main.py")
             sys.exit(0)
         else:
             send_message(channel_debug, "Sorry, you are not authorized to use this command.")
-            
+
     elif command == "author" or command == "au":
         try:
             output = crom.ausearch(" ".join(args)) 
@@ -338,7 +352,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     return
                 except Exception as e:
                     send_message(channel_debug, f'{sender}: Error! String: {e}')
-                    
+
     elif command == "refresh":
         send_message(channel_debug, f'{sender}: Manually refreshing cache...')
         crom.refresh_cache()
