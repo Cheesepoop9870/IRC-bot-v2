@@ -23,10 +23,10 @@ channel_list = ["#cheesepoop9870",] #facility36",]
 
 
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza", "PineappleOnSleepza", } # Add admin usernames here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo",} # Add admin usernames/hosts here
 
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
-latest_range = 3 # 3 = 3 results, 5 = 5 results, etc.
+latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
 
 
 def handle_command(command, args, handle, sender, channel_debug, full_host=None):
@@ -365,6 +365,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
 if __name__ == "__main__":
     try:
         # Create socket and wrap with SSL
+        #barebones IRC bot
         context = ssl.create_default_context()
         ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ircsock = context.wrap_socket(ircsock, server_hostname=server)
