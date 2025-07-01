@@ -188,6 +188,28 @@ query Search($query: String!, $noAttributions: Boolean!) {
 }
 """
 
+rating_body = """
+query Search($query: String!) {
+  searchPages(query: $query, filter: {anyBaseUrl: "http://scp-wiki.wikidot.com"}) {
+    wikidotInfo {
+      rating
+    }
+  }
+}
+"""
+
+def rating(query):
+    variables2 = {
+      'query': f'{query}',  # term
+    }
+    response = requests.post(url=url, json={"query": rating_body, "variables": variables2})
+    if response.status_code == 200:
+        output = response.content.decode('utf-8')
+        output2 = json.loads(output)
+        output3 = output2["data"]["searchPages"][0]["wikidotInfo"]["rating"]
+        return output3
+    else:
+        return f"Error {response.status_code}"
 
 def addplus(arg):
     if arg > 0:
