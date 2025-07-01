@@ -333,20 +333,99 @@ def latest():
     # Start background cache refresh if not already running
     start_background_cache()
     
-    # Check cache first
-    cache_key = "latest_articles"
-    if cache_key in _cache:
-        cached_data, timestamp = _cache[cache_key]
-        if is_cache_valid(timestamp):
-            print("Using cached data")
+    # Get current page names from the website
+    try:
+        URL = "https://scp-wiki.wikidot.com/most-recently-created"
+        r = requests.get(URL)
+        soup = BeautifulSoup(r.content, 'html5lib')
+        html = soup.find_all('div', attrs={'class': 'list-pages-box'})
+        output = html[2].text.strip().split("\n")
+        output = [item for item in output if item]
+        
+        # Skip the header (first 3 elements) and group every 3 elements
+        data_without_header = output[3:]  # Remove header elements
+        output2 = []
+        
+        # Group every 3 elements into sublists
+        for i in range(0, len(data_without_header), 3):
+            if i + 2 < len(data_without_header):  # Make sure we have all 3 elements
+                output2.append(data_without_header[i:i+3])
+        
+        # Get current article names
+        current_article_names = [output2[i][0] for i in range(min(5, len(output2)))]
+        
+    except Exception as e:
+        print(f"Error fetching page names: {e}")
+        # Fall back to cached data if available
+        cache_key = "latest_articles"
+        if cache_key in _cache:
+            cached_data, timestamp = _cache[cache_key]
             return cached_data
+        return []
     
-    # If no valid cache, fetch fresh data immediately
+    # Check cache
+    cache_key = "latest_articles"
+    cached_page_names_key = "latest_page_names"
+    
+    if cache_key in _cache and cached_page_names_key in _cache:
+        cached_data, timestamp = _cache[cache_key]
+        cached_page_names, _ = _cache[cached_page_names_key]
+        
+        # If page names haven't changed and cache is valid, return cached data
+        if is_cache_valid(timestamp) and cached_page_names == current_article_names:
+            print("Using cached data - no new pages")
+            return cached_data
+        
+        # If page names have changed, only fetch new pages
+        if cached_page_names != current_article_names:
+            print("New pages detected, fetching only new data...")
+            new_pages = [name for name in current_article_names if name not in cached_page_names]
+            
+            if new_pages:
+                # Fetch only new pages
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    new_results = loop.run_until_complete(fetch_latest_parallel(new_pages))
+                    loop.close()
+                    
+                    # Keep existing cached data for unchanged pages and add new data
+                    updated_results = []
+                    for name in current_article_names:
+                        if name in cached_page_names:
+                            # Find and keep existing data
+                            existing_data = next((item for item in cached_data if item.get("title") == name), None)
+                            if existing_data:
+                                updated_results.append(existing_data)
+                        else:
+                            # Add new data
+                            new_data = next((item for item in new_results if item.get("title") == name), None)
+                            if new_data:
+                                updated_results.append(new_data)
+                    
+                    # Update cache
+                    _cache[cache_key] = (updated_results, time.time())
+                    _cache[cached_page_names_key] = (current_article_names, time.time())
+                    
+                    return updated_results
+                    
+                except Exception as e:
+                    print(f"Error fetching new pages: {e}")
+                    # Fall back to existing cache
+                    return cached_data
+            else:
+                # No new pages, just update timestamp and return existing data
+                _cache[cache_key] = (cached_data, time.time())
+                _cache[cached_page_names_key] = (current_article_names, time.time())
+                return cached_data
+    
+    # If no valid cache exists, fetch all data
     print("Fetching fresh data...")
     results = _fetch_latest_data()
     
-    # Cache the results
+    # Cache the results and page names
     _cache[cache_key] = (results, time.time())
+    _cache[cached_page_names_key] = (current_article_names, time.time())
     
     return results
 
