@@ -5,8 +5,9 @@ import ssl
 import sys
 import time
 from local_googlesearch_python import search
-from crom import wikisearch, ausearch, latest
+# from crom import wikisearch, ausearch, latest, refresh_cache, cache_set
 import os
+import crom
 
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
@@ -16,13 +17,13 @@ server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870'
 # channel_debug = ""
 nick = 'Mando-Bot'
-realname = 'v1.2.6-alpha'  # This will be displayed in WHOIS
+realname = 'v1.2.8-alpha'  # This will be displayed in WHOIS
 port = 6697
 channel_list = ["#cheesepoop9870",] #facility36",]
 
 
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza"} # Add admin usernames here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza, PineappleOnSleepza"} # Add admin usernames here
 
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc.
@@ -263,7 +264,7 @@ def handle_command(command, args, handle, sender, channel_debug):
         
     elif command == "search" or command == "s":
         try:
-            output = wikisearch(" ".join(args))
+            output = crom.wikisearch(" ".join(args))
             output2 = ""
             output3 = []
             debug(0, output)
@@ -292,9 +293,9 @@ def handle_command(command, args, handle, sender, channel_debug):
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
             
-    elif command == "refresh":
+    elif command == "reboot":
         if sender in ADMIN_USERS:
-            handle.write("QUIT :Refreshing\r\n")
+            handle.write("QUIT :Rebooting\r\n")
             handle.flush()
             os.system("python3 main.py")
             sys.exit(0)
@@ -303,7 +304,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             
     elif command == "author" or command == "au":
         try:
-            output = ausearch(" ".join(args)) 
+            output = crom.ausearch(" ".join(args)) 
             #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
             #note: errors are intentional, they wont cause a problem
             if output["authorPageUrl"] != "":
@@ -318,7 +319,7 @@ def handle_command(command, args, handle, sender, channel_debug):
     elif command == "latest" or command == "l":
             for x in range(0, int(latest_range)):
                 try:
-                    output = latest()[x]
+                    output = crom.latest()[x]
                     output2 = ""
                     output3 = []
                     debug(0, output)
@@ -337,82 +338,90 @@ def handle_command(command, args, handle, sender, channel_debug):
                     return
                 except Exception as e:
                     send_message(channel_debug, f'{sender}: Error! String: {e}')
+                    
+    elif command == "refresh":
+        send_message(channel_debug, f'{sender}: Manually refreshing cache...')
+        crom.refresh_cache()
+        send_message(channel_debug, f'{sender}: Cache refreshed!')
+        #add db.py commands here too
+
 ##################################################################################
 ##################################################################################
 
-try:
-    # Create socket and wrap with SSL
-    context = ssl.create_default_context()
-    ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ircsock = context.wrap_socket(ircsock, server_hostname=server)
-    ircsock.connect((server, port))
-    handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
-
-    print('NICK', nick, file=handle)
-    print('USER', nick, nick, nick, ':'+realname, file=handle)
-
-
-    joined = False
-    history_bypass = 0
-    while True:
-        line = handle.readline().strip()
-        print(line)
-
-
-        # Check for PING and respond with PONG
-        if "PING" in line:
-            pong = "PONG :" + line.split(':')[1]
-            handle.write(pong + '\r\n')
-            handle.flush()
-
-            # Join channel after first PING (server ready)
-            if not joined:
-                handle.write('PRIVMSG NickServ :identify Ilovestarwars321?\r\n') #remember to hide password
-                time.sleep(2)
-                for x in range(0, len(channel_list)):
-                    handle.write(f'JOIN {channel_list[x]}\r\n')
-                handle.write(f'MODE {nick} :+B\r\n')
-                handle.flush()
-                joined = True
-            continue
-
-        # Check for PRIVMSG (chat messages)
-        if "PRIVMSG" in line and ':!' in line:
-            # Extract the sender's nickname
-            sender = line.split('!')[0][1:]
-            # Extract the channel
-            channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
-            # Extract the command part
-
-            msg_parts = line.split(':!')
-            if len(msg_parts) > 1:
-                # Split command and arguments
-                cmd_parts = msg_parts[1].split()
-                command = cmd_parts[0].lower()
-                args = cmd_parts[1:] if len(cmd_parts) > 1 else []
-
-                # Handle the command
-                if history_bypass == 1:
-                    if handle_command(command, args, handle, sender, channel_temp):
-                        break
-            history_check = line.split(":!!clear")
-            history_channel = line #may break
-            if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
-                history_bypass = 1
-                handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
-                handle.flush()
-except Exception as e:
-    print(f"Error: {e}")
-    # break
-finally:
+if __name__ == "__main__":
     try:
+        # Create socket and wrap with SSL
         context = ssl.create_default_context()
         ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ircsock = context.wrap_socket(ircsock)
+        ircsock = context.wrap_socket(ircsock, server_hostname=server)
+        ircsock.connect((server, port))
         handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
-        handle.write('QUIT :\r\n')
-        handle.flush()
-        sys.exit(1)
-    except Exception:
-        pass
+
+        print('NICK', nick, file=handle)
+        print('USER', nick, nick, nick, ':'+realname, file=handle)
+
+
+        joined = False
+        history_bypass = 0
+        while True:
+            line = handle.readline().strip()
+            print(line)
+
+
+            # Check for PING and respond with PONG
+            if "PING" in line:
+                pong = "PONG :" + line.split(':')[1]
+                handle.write(pong + '\r\n')
+                handle.flush()
+
+                # Join channel after first PING (server ready)
+                if not joined:
+                    handle.write('PRIVMSG NickServ :identify Ilovestarwars321?\r\n') #remember to hide password
+                    time.sleep(2)
+                    for x in range(0, len(channel_list)):
+                        handle.write(f'JOIN {channel_list[x]}\r\n')
+                    handle.write(f'MODE {nick} :+B\r\n')
+                    handle.flush()
+                    joined = True
+                continue
+
+            # Check for PRIVMSG (chat messages)
+            if "PRIVMSG" in line and ':!' in line:
+                # Extract the sender's nickname
+                sender = line.split('!')[0][1:]
+                # Extract the channel
+                channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
+                # Extract the command part
+
+                msg_parts = line.split(':!')
+                if len(msg_parts) > 1:
+                    # Split command and arguments
+                    cmd_parts = msg_parts[1].split()
+                    command = cmd_parts[0].lower()
+                    args = cmd_parts[1:] if len(cmd_parts) > 1 else []
+
+                    # Handle the command
+                    if history_bypass == 1:
+                        if handle_command(command, args, handle, sender, channel_temp):
+                            break
+                history_check = line.split(":!!clear")
+                history_channel = line #may break
+                if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
+                    history_bypass = 1
+                    handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
+                    handle.flush()
+    except Exception as e:
+        print(f"Error: {e}")
+        # break
+    finally:
+        try:
+            context = ssl.create_default_context()
+            ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ircsock = context.wrap_socket(ircsock)
+            handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
+            handle.write('QUIT :\r\n')
+            handle.flush()
+            sys.exit(1)
+        except Exception:
+            pass
 # HIDE PASSWORD

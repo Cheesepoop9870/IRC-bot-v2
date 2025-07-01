@@ -10,6 +10,12 @@ cursor.execute('''
     )
 ''')
 
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS logs (
+        log TEXT PRIMARY KEY
+    )
+''')
+
 # Insert some test data
 def add_channel(channel):
   cursor = conn.cursor()
@@ -28,6 +34,12 @@ def get_channels():
   rows = cursor.fetchall()
   for row in rows:
       print(row)
+def add_log(log):
+  cursor = conn.cursor()
+  cursor.execute("INSERT OR IGNORE INTO logs (log) VALUES (?)", (f"{log}",))
+  conn.commit()
+  cursor.close()
+
 
 # Commit changes and close connection
 conn.commit()
