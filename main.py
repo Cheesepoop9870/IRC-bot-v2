@@ -29,7 +29,7 @@ debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc.
 
 
-def handle_command(command, args, handle, sender, channel_debug):
+def handle_command(command, args, handle, sender, channel_debug, full_host=None):
     
     #debug command
     def debug(var, args):
@@ -79,7 +79,7 @@ def handle_command(command, args, handle, sender, channel_debug):
         send_message(channel_debug, f'Hello, {sender}!')
         
     elif command == "quit":
-        if sender in ADMIN_USERS:
+        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
             handle.write(f'QUIT :Quit command used by {sender} in channel {channel_debug}\r\n')
             handle.flush()
             sys.exit(0)
@@ -93,7 +93,7 @@ def handle_command(command, args, handle, sender, channel_debug):
         send_message(channel_debug, 'List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands')
         
     elif command == "setup":
-        if sender in ADMIN_USERS:
+        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
             send_message(channel_debug, 'Setting up the bot...')
             send_message(channel_debug, 'Bot setup complete!')
             #time.sleep(3)
@@ -160,7 +160,7 @@ def handle_command(command, args, handle, sender, channel_debug):
         handle.flush()
         
     elif command == "leave": #add multiple channel support
-        if sender in ADMIN_USERS:
+        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
             if len(args[0])> 0:
                 handle.write(f'PART {args[0]}\r\n')
                 channel_list.remove(args[0])
@@ -234,7 +234,7 @@ def handle_command(command, args, handle, sender, channel_debug):
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
-                if sender in ADMIN_USERS:
+                if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
                     global debug_flag
                     debug_flag = debug_flag + 1
                     if debug_flag > 1:
@@ -245,7 +245,7 @@ def handle_command(command, args, handle, sender, channel_debug):
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
             
             elif args[1] == "latest_range":
-                if sender in ADMIN_USERS:
+                if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
                     global latest_range
                     latest_range = args[2]
                     try:
@@ -286,7 +286,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             send_message(channel_debug, f'{sender}: Error! String: {e}')
             
     elif command == "raw":
-        if sender in ADMIN_USERS:
+        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
             args = " ".join(args)
             handle.write(f'{args}\r\n')
             handle.flush()
@@ -294,7 +294,7 @@ def handle_command(command, args, handle, sender, channel_debug):
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
             
     elif command == "reboot":
-        if sender in ADMIN_USERS:
+        if sender in ADMIN_USERS or (full_host and full_host in ADMIN_USERS):
             handle.write("QUIT :Rebooting\r\n")
             handle.flush()
             os.system("python3 main.py")
@@ -389,6 +389,8 @@ if __name__ == "__main__":
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
                 sender = line.split('!')[0][1:]
+                # Extract the full host (nick!user@host)
+                full_host = line.split(' PRIVMSG')[0][1:]
                 # Extract the channel
                 channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
                 # Extract the command part
@@ -402,7 +404,7 @@ if __name__ == "__main__":
 
                     # Handle the command
                     if history_bypass == 1:
-                        if handle_command(command, args, handle, sender, channel_temp):
+                        if handle_command(command, args, handle, sender, channel_temp, full_host):
                             break
                 history_check = line.split(":!!clear")
                 history_channel = line #may break
