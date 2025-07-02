@@ -40,6 +40,9 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
 
     #message splitting function
     def send_message(channel, message):
+        # Replace 'ops' with '0ps' in the message
+        message = message.replace('ops', '0ps')
+        
         if len(message) <= 433:
             print(f'PRIVMSG {channel} :{message}')
             handle.write(f'PRIVMSG {channel} :{message}\r\n')
