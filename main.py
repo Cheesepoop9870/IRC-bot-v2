@@ -8,6 +8,7 @@ from local_googlesearch_python import search
 # from crom import wikisearch, ausearch, latest, refresh_cache, cache_set
 import os
 import crom
+import base64
 
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
@@ -278,7 +279,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             output2 = ""
             output3 = []
             debug(0, output)
-            #note: errors are intentional, they wont cause a problem
+            #note: errors wont cause a poblem
             if output["title2"] == []: #no alt title
                 output["title2"] = ""
                 output["title"] = f"{output['title']},"
@@ -320,7 +321,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         try:
             output = crom.ausearch(" ".join(args)) 
             #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
-            #note: errors are intentional, they wont cause a problem
+            #note: errors wont cause a problem
             if output["authorPageUrl"] != "":
                 send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
             else:
@@ -372,24 +373,36 @@ if __name__ == "__main__":
         ircsock = context.wrap_socket(ircsock, server_hostname=server)
         ircsock.connect((server, port))
         handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
-
         print('NICK', nick, file=handle)
         print('USER', nick, nick, nick, ':'+realname, file=handle)
-
-
+        
+        
+        
         joined = False
         history_bypass = 0
         while True:
             line = handle.readline().strip()
             print(line)
-
-
+            
+            #sasl auth
+            if "Found" in line:
+                sasl = "Mando-Bot Mando-Bot PASSWORD"
+                sasl = sasl.encode("utf-8")
+                sasl = base64.b64encode(sasl)
+                print('CAP REQ :sasl', file=handle)
+                print('CAP REQ :sasl')
+                print('AUTHENTICATE PLAIN', file=handle)
+                print('AUTHENTICATE PLAIN')
+                time.sleep(3) #this is needed for some reason
+                print('AUTHENTICATE', sasl, file=handle)
+                print('AUTHENTICATE', sasl)
+                print('CAP END', file=handle)
             # Check for PING and respond with PONG
             if "PING" in line:
                 pong = "PONG :" + line.split(':')[1]
                 handle.write(pong + '\r\n')
                 handle.flush()
-
+                
                 # Join channel after first PING (server ready)
                 if not joined:
                     handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
