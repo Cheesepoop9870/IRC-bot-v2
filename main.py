@@ -4,12 +4,12 @@ import socket
 import ssl
 import sys
 import time
-from local_googlesearch_python import search
-# from crom import wikisearch, ausearch, latest, refresh_cache, cache_set
 import os
 import crom
 import base64
-
+import json
+from local_googlesearch_python import search
+from youtube_search import YoutubeSearch as ytsearch    
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
 #note: add !pingall message availibility
@@ -40,6 +40,9 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
 
     #message splitting function
     def send_message(channel, message):
+        # Replace 'ops' with '0ps' in the message
+        message = message.replace('ops', '0ps')
+        
         if len(message) <= 433:
             print(f'PRIVMSG {channel} :{message}')
             handle.write(f'PRIVMSG {channel} :{message}\r\n')
@@ -252,7 +255,6 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     debug("", "check")
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-
             elif args[1] == "latest_range":
                 # Extract just the host part (after @) if full_host exists
                 host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
@@ -267,7 +269,22 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                         send_message(channel_debug, 'Error! latest_range must be an integer')
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-
+            elif args[1] == "cache":
+                # Extract just the host part (after @) if full_host exists
+                host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
+                if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
+                    try:
+                        crom.cache_set(int(args[2]))
+                        send_message(channel_debug, f'Cache duration = {args[2]}')
+                    except ValueError:
+                        send_message(channel_debug, 'Error! cache duration must be an integer')
+                    except Exception as e:
+                        send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
+                else:
+                    send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+        elif args[0] == "get":
+            if args[1] == "debug":
+                send_message(channel_debug, f'Debug mode = {debug_flag}')
     elif command == "ch" or command == "choose":
         output_str = " ".join(args)
         output = output_str.split(",")
@@ -278,7 +295,20 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             output = crom.wikisearch(" ".join(args))
             output2 = ""
             output3 = []
+            output4 = []
+            output4.append(output["rating"].split("(")[0])
+            output4.append(output["rating"].split("(")[1][0:len(output["rating"].split("(")[1])-1])
+            output4.append(output4[1].split("/")[0].strip("+"))
+            output4.append(output4[1].split("/")[1].strip("-"))
+            output4.append(int(output4[2]) + int(output4[3]))
+            output4.append(int(output4[2])/int(output4[4]))
+            output4.append("")
+            output4[5] = f"{output4[5]:.2%}"
+            output4.pop(6)
             debug(0, output)
+            debug(1, output4)
+            debug(2, output4[5])
+            
             #note: errors wont cause a poblem
             if output["title2"] == []: #no alt title
                 output["title2"] = ""
@@ -306,7 +336,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
 
-    elif command == "reboot":
+    elif command == "reboot" or command == "!reboot":
         # Extract just the host part (after @) if full_host exists
         host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
         if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
@@ -361,6 +391,56 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         #add db.py commands here too
     elif command == "irc":
         send_message(channel_debug, f'{sender}: https://www.rfc-editor.org/rfc/rfc1459.html')
+
+    elif command == "youtube" or command == "yt" or command == "y":
+        results = ytsearch(' '.join(args), 1).to_json()
+        debug(0, json.loads(results)["videos"][0])
+        debug(1, type(json.loads(results)))
+        output.append(f"http://youtube.com/watch?v={json.loads(results)['videos'][0]['id']}") #0
+        output.append(json.loads(results)['videos'][0]['title']) #1
+        output.append(json.loads(results)['videos'][0]['channel']) #2
+        output.append(json.loads(results)['videos'][0]['duration']) #3
+        output.append(json.loads(results)['videos'][0]['views']) #4
+        output.append(json.loads(results)['videos'][0]['publish_time']) #5
+        send_message(channel_debug, f"{sender}: {output[1]} by {output[2]} {output[5]} - length {output[3]} - {output[4]} - {output[0]}")
+
+    elif command == "brauthor" or command == "brau":
+        try:
+            output = crom.br_ausearch(" ".join(args)) 
+            #note: errors wont cause a problem
+            if output["authorPageUrl"] != "":
+                send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+            else:
+                send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+        except IndexError:
+            send_message(channel_debug, f'{sender}: No results found!')
+            return
+        except Exception as e:
+            send_message(channel_debug, f'{sender}: Error! String: {e}')
+
+    elif command == "brsearch" or command == "brs":
+        try:
+            output = crom.br_wikisearch(" ".join(args))
+            output2 = ""
+            output3 = []
+            debug(0, output)
+            #note: errors wont cause a poblem
+            if output["title2"] == []: #no alt title
+                output["title2"] = ""
+                output["title"] = f"{output['title']},"
+            else:
+                output["title"] = f"{output['title']}:"
+                output_str = dict(output["title2"][0])["title"]
+                output_str = f"{output_str},"
+            for x in range(0, len(output["authors"])):
+                output3.append(dict(output["authors"][x])["user"]["name"])
+            send_message(channel_debug, f"{sender}: {output['title']} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+        except IndexError:
+            send_message(channel_debug, f'{sender}: No results found!')
+            return
+        except Exception as e:
+            send_message(channel_debug, f'{sender}: Error! String: {e}')
+
 ##################################################################################
 ##################################################################################
 
@@ -385,8 +465,9 @@ if __name__ == "__main__":
             print(line)
             
             #sasl auth
+            #DONT TOUCH THIS
             if "Found" in line:
-                sasl = "Mando-Bot Mando-Bot PASSWORD"
+                sasl = "Mando-Bot Mando-Bot PASSWORD" #remember to hide password
                 sasl = sasl.encode("utf-8")
                 sasl = base64.b64encode(sasl)
                 print('CAP REQ :sasl', file=handle)
