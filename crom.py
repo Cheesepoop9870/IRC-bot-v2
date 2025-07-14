@@ -7,7 +7,7 @@ import time
 import threading
 from typing import List, Dict, Any
 output = []
-url = "https://api.crom.avn.sh"
+url = "https://api.crom.avn.sh" #backup api https://hoppscotch.io/graphql |https://api.crom.avn.sh/graphql
 
 # Simple in-memory cache
 _cache = {}
@@ -163,9 +163,80 @@ query Search($query: String!) {
 }
 """
 
+
+br_aubody = """
+query Search($query: String!) {
+  searchUsers(query: $query, filter: {anyBaseUrl: "http://backrooms-wiki.wikidot.com"}) {
+    wikidotInfo {
+      displayName
+      wikidotId
+    }
+    statistics{
+      rank
+      meanRating
+      totalRating
+      pageCount
+      pageCountLevel
+      pageCountEntity
+      pageCountObject
+      pageCountScp
+      pageCountTale
+      pageCountGoiFormat
+      pageCountArtwork
+    }
+    authorInfos {
+      authorPage {
+        wikidotInfo{
+          title
+        }
+        url
+      }
+    }
+    attributedPages(sort: { key: CREATED_AT, order: DESC }, first: 1) {
+          edges {
+            node {
+              url
+              wikidotInfo {
+                title
+                rating
+                voteCount
+              }
+            }
+          }
+    }
+  }
+}
+"""
+
+
 body = """
 query Search($query: String!, $noAttributions: Boolean!) {
   searchPages(query: $query, filter: {anyBaseUrl: "http://scp-wiki.wikidot.com"}) {
+    url
+    wikidotInfo {
+      title
+      rating
+      createdAt
+      voteCount
+      commentCount
+    }
+    alternateTitles {
+      title
+    }
+    attributions @skip(if: $noAttributions) {
+      type
+      user {
+        name
+      }
+      date
+    }
+  }
+}
+"""
+
+br_body = """
+query Search($query: String!, $noAttributions: Boolean!) {
+  searchPages(query: $query, filter: {anyBaseUrl: "http://backrooms-wiki.wikidot.com"}) {
     url
     wikidotInfo {
       title
@@ -330,10 +401,10 @@ async def wikisearch_async(session: aiohttp.ClientSession, query: str) -> Dict[s
                     "authors": page_data["attributions"]
                 }
             else:
-                return None
+                return None #its fine
     except Exception as e:
         print(f"Error in async wikisearch: {e}")
-        return None
+        return None #its fine
 
 async def fetch_latest_parallel(article_names: List[str]) -> List[Dict[str, Any]]:
     """Fetch multiple articles in parallel"""
@@ -501,12 +572,103 @@ def latest():
     
     return results
 
+def br_ausearch(query):
+  variables2 = {
+    'query': f'{query}',  # term
+  }
+  response = requests.post(url=url, json={"query": br_aubody, "variables": variables2})
+  if response.status_code == 200:
+    output = response.content.decode('utf-8')
+    output2 = json.loads(output)
+    output3 = []
+    output4 = {}
+    output3.append(output2["data"]["searchUsers"][0]["wikidotInfo"]["displayName"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["rank"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["meanRating"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["totalRating"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCount"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountLevel"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountEntity"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountObject"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountScp"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountTale"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountGoiFormat"])
+    output3.append(output2["data"]["searchUsers"][0]["statistics"]["pageCountArtwork"])
+    if output2["data"]["searchUsers"][0]["authorInfos"] == []: #no author page
+      output3.append("")
+      output3.append("")
+    else:
+      output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["url"])
+      output3.append(output2["data"]["searchUsers"][0]["authorInfos"][0]["authorPage"]["wikidotInfo"]["title"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["url"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["title"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["rating"])
+    output3.append(output2["data"]["searchUsers"][0]["attributedPages"]["edges"][0]["node"]["wikidotInfo"]["voteCount"])
+    #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
+
+    output4 = {
+      "name": output3[0],
+      "rank": output3[1],
+      "meanRating": addplus(output3[2]),
+      "totalRating": addplus(output3[3]),
+      "pageCount": output3[4],
+      "pageCountLevel": output3[5],
+      "pageCountEntity": output3[6],
+      "pageCountObject": output3[7],
+      "pageCountScp": output3[8],
+      "pageCountTale": output3[9],
+      "pageCountGoiFormat": output3[10],
+      "pageCountArtwork": output3[11],
+      "pageCountOther": output3[4] - output3[5] - output3[6] - output3[7], #other count
+      "authorPageUrl": output3[12],
+      "authorPageTitle": output3[13],
+      "lastPageUrl": output3[14],
+      "lastPageTitle": output3[15],
+      "lastPageRating": f"{addplus(output3[16])} (+{int((output3[16] + output3[17])/2)}/-{abs(int((output3[16] - output3[17])/2))})"
+    }
+    return output4
+
+
+def br_wikisearch(query):
+    variables2 = {
+      'query': f'{query}',  # term
+      'noAttributions': False
+    }
+    response = requests.post(url=url, json={"query": br_body, "variables": variables2})
+    if response.status_code == 200:
+      output = response.content.decode('utf-8')
+      output2 = json.loads(output)
+      output3 = []
+      output4 = {}
+      output3.append(output2["data"]["searchPages"][0]["url"]) 
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["title"])
+      output3.append(output2["data"]["searchPages"][0]["alternateTitles"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["rating"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["voteCount"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["createdAt"])
+      output3.append(output2["data"]["searchPages"][0]["wikidotInfo"]["commentCount"])
+      output3.append(output2["data"]["searchPages"][0]["attributions"])
+      #url, title, title2, rating, total votes, created at, total comments, authors
+      output4 = {
+        "url": output3[0],
+        "title": output3[1],
+        "title2": output3[2],
+        "rating": f"{addplus(output3[3])} (+{int((output3[3] + output3[4])/2)}/-{abs(int((output3[3] - output3[4])/2))})", #full rating (+upvotes/-downvotes)
+        "createdAt": " ".join(output3[5].split("T"))[0:len(" ".join(output3[5].split("T")))-2],
+        "comments": output3[6],
+        "authors": output3[7]
+      }
+      return dict(output4)
+    else: 
+      return f"Error {response.status_code}"
+
+
 def cache_set(time):
     global CACHE_DURATION
     CACHE_DURATION = time
 
 if __name__ == "__main__":
-  output = ausearch("thew")
+  output = wikisearch("4566")
   print(type(output))
   print(output)
 
