@@ -8,23 +8,34 @@ import os
 import crom
 import base64
 import json
+import logging as log
 from local_googlesearch_python import search
 from youtube_search import YoutubeSearch as ytsearch    
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
 #note: add !pingall message availibility
 
+#logging stuff
+log.basicConfig(
+    level=log.DEBUG,  
+    format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
+    filename='app.log',  # Log to a file named 'app.log'
+    filemode='a',         # Append to the file (default is 'a', 'w' for overwrite)
+    datefmt='%H:%M:%S',
+)
+
+log.debug("started")
 server = 'irc.scpwiki.com'
-channel = '#cheesepoop9870'
+channel = '#cheesepoop9870, #Facility36'
 # channel_debug = ""
 nick = 'Mando-Bot'
 realname = 'v1.2.8-alpha'  # This will be displayed in WHOIS
 port = 6697
-channel_list = ["#cheesepoop9870",] #facility36",]
-
+channel_list = ["#cheesepoop9870", "#facility36", "#neutralzone", "#site22"]
+# channel_list = db.get_channels()
 
 # List of admin usernames who can use privileged commands
-ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "BineappleOnPizza", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo",} # Add admin usernames/hosts here
+ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes"} # Add admin usernames/hosts here
 
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
@@ -88,12 +99,14 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             handle.write(f'QUIT :Quit command used by {sender} in channel {channel_debug}\r\n')
             handle.flush()
+            log.info(f'Quit command used by {sender} in channel {channel_debug}')
             sys.exit(0)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-
+            log.warning(f'{sender} tried to use the quit command in channel {channel_debug}')
     elif command == "clear":
         send_message(channel_debug, 'Message history cleared!')
+        log.debug(f"clear command used by {sender} in channel")
 
     elif command == "commands":
         send_message(channel_debug, 'List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands')
@@ -105,11 +118,12 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, 'Setting up the bot...')
             send_message(channel_debug, 'Bot setup complete!')
             #time.sleep(3)
+            log.debug(f"setup command used by {sender} in channel {channel_debug}")
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-
+            log.warning(f'{sender} tried to use the setup command in channel {channel_debug}')
     elif command == "!roll":
-        try:
+        try: 
             commandargs = "".join(args)
             if "+" in commandargs:
                 commandargs3 = commandargs.split("+")
@@ -146,7 +160,9 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             cflag_plus_roll = 0
         except IndexError:
             send_message(channel_debug, 'Invalid dice format. use 1d10 or similar')
-
+        except Exception as e:
+            send_message(channel_debug, f'Error: {e}')
+            log.exception(f"Error: {e}")
     elif command == "everyone":
         handle.write(f'NAMES {channel_debug}\r\n')
         handle.flush()
@@ -156,7 +172,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             names = response.split(':')[-1].strip()  # Get names portion
             send_message(channel_debug, f'Users in channel: {names}')
         else:
-            send_message(channel_debug, 'Error! if this happenes, tell cheese. Error string: 425/404')
+            send_message(channel_debug, 'Error! if this happenes, tell cheese. Error string: 425/404')   
+            log.error("Error! names command failed")
 
     elif command == "join": #add multiple channel support
         handle.write(f'JOIN {args[0]}\r\n')
@@ -165,6 +182,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f'{sender}: Invalid format. Use !join #channel')
         else:
           send_message(channel_debug, f'Joined {args[0]}')
+          log.info(f"Joined {args[0]}")
         handle.flush()
 
     elif command == "leave": #add multiple channel support
@@ -175,9 +193,13 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 handle.write(f'PART {args[0]}\r\n')
                 channel_list.remove(args[0])
                 handle.flush()
+                log.info(f"Left {args[0]}")
             else:
                 handle.write(f"PART {channel_debug}\r\n")
                 handle.flush()
+        else: 
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+            log.warning(f'{sender} tried to use the leave command in channel {channel_debug}')
     elif command == "google" or command == "g":
         #note: ADD SPACE BETWEEN URL AND TITLE
         debug(-1, list(search(args, num_results=2)))
@@ -190,7 +212,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             debug(2, output)
             output.pop(0) # Remove the first element
             debug(3, output)
-            output2 = str(output[0]).split("=")
+            output2 = str(output[0]).split("title=")
             debug(4, output2)
             output2.pop(0) # Remove the first element
             debug(5, output2)
@@ -206,9 +228,11 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             #404 check
             if ", title | , description |" in output_str or "/search?" in output_str:
               send_message(channel_debug, f'{sender}: No results found!')
+              log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got no results')
             else:
               send_message(channel_debug, f'{sender}: {output_str}')
-        elif bool(list(search(args, num_results=1))[0]): # true
+        elif bool(list(search(args, num_results=1))[0]): # true, first result contains a 404 or error
+            log.warn(f'{sender} tried to use the google command in channel {channel_debug} but got a 404 or error on first result')
             try:
                 output = list(search(args, num_results=1, advanced=True))
                 debug(1, output)
@@ -238,9 +262,10 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                   send_message(channel_debug, f"{sender}: {output_str[0:len(output_str)-2]}")
             except Exception as e:
                 send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
+                log.exception(f"Error: {e}")
         else:
             send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
-
+            log.error("Error! google command failed")
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
@@ -253,22 +278,28 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                         debug_flag = 0
                     send_message(channel_debug, f'Debug mode = {debug_flag}')
                     debug("", "check")
+                    log.info(f'Debug mode set to {debug_flag} by {sender} in channel {channel_debug}')
                 else:
-                    send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+                    send_message(channel_debug, 'Sorry, you are not authorized to use this command.')    
+                    log.warning(f'{sender} tried to use the debug command in channel {channel_debug}')
             elif args[1] == "latest_range":
                 # Extract just the host part (after @) if full_host exists
                 host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
                 if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
                     global latest_range
                     latest_range = args[2]
+                    
                     try:
                         if int(latest_range) > 5:
                             send_message(channel_debug, 'Error! latest_range cannot be greater than 5')
+                            log.warn(f'{sender} tried to set latest_range to {latest_range} in channel {channel_debug}')
+                            latest_range = 3
                         send_message(channel_debug, f'Latest search range = {latest_range}')
                     except ValueError:
                         send_message(channel_debug, 'Error! latest_range must be an integer')
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+                    log.warning(f'{sender} tried to use the latest_range command in channel {channel_debug}')
             elif args[1] == "cache":
                 # Extract just the host part (after @) if full_host exists
                 host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
@@ -276,12 +307,15 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     try:
                         crom.cache_set(int(args[2]))
                         send_message(channel_debug, f'Cache duration = {args[2]}')
+                        log.info(f'Cache duration set to {args[2]} by {sender} in channel {channel_debug}')
                     except ValueError:
                         send_message(channel_debug, 'Error! cache duration must be an integer')
                     except Exception as e:
                         send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
+                        log.exception(f"Error: {e}")
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
+                    log.warning(f'{sender} tried to use the cache command in channel {channel_debug}')
         elif args[0] == "get":
             if args[1] == "debug":
                 send_message(channel_debug, f'Debug mode = {debug_flag}')
@@ -325,6 +359,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
+            log.exception(f"Error: {e}")
 
     elif command == "raw":
         # Extract just the host part (after @) if full_host exists
@@ -333,23 +368,41 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             args = " ".join(args)
             handle.write(f'{args}\r\n')
             handle.flush()
+            log.info(f'Raw command used by {sender} in channel {channel_debug}. {args}')
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
-
+            log.warning(f'{sender} tried to use the raw command in channel {channel_debug}')
     elif command == "reboot" or command == "!reboot":
         # Extract just the host part (after @) if full_host exists
         host_only = full_host.split('@')[1] if full_host and '@' in full_host else None
         if sender in ADMIN_USERS or (host_only and host_only in ADMIN_USERS):
             handle.write("QUIT :Rebooting\r\n")
             handle.flush()
+            log.info(f'Reboot command used by {sender} in channel {channel_debug}')
             os.system("python3 main.py")
             sys.exit(0)
         else:
             send_message(channel_debug, "Sorry, you are not authorized to use this command.")
-
+            log.warning(f'{sender} tried to use the reboot command in channel {channel_debug}')
     elif command == "author" or command == "au":
         try:
-            output = crom.ausearch(" ".join(args)) 
+            if len(args) == 0:
+                if sender == "cheesepoop9870": #overrides for some users
+                    output = crom.ausearch("theword9870")
+                elif sender == "PineappleOnPizza":
+                    output = crom.ausearch("theword9870")
+                elif sender == "cheesepoop9870_":
+                    output = crom.ausearch("theword9870")
+                elif sender == "SoundChaser":
+                    output = crom.ausearch("Sound Chaser")
+                elif sender == "JuneBug":
+                    output = crom.ausearch("bunnyomega")
+                elif sender == "MsBadBitch":
+                    output = crom.ausearch("DrEverett")
+                else:
+                    output = crom.ausearch(sender)
+            else:
+                output = crom.ausearch(" ".join(args)) 
             #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
             #note: errors wont cause a problem
             if output["authorPageUrl"] != "":
@@ -361,6 +414,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
+            log.exception(f"Error: {e}")
     elif command == "latest" or command == "l":
             for x in range(0, int(latest_range)):
                 try:
@@ -383,11 +437,13 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     return
                 except Exception as e:
                     send_message(channel_debug, f'{sender}: Error! String: {e}')
+                    log.exception(f"Error: {e}")
 
     elif command == "refresh":
         send_message(channel_debug, f'{sender}: Manually refreshing cache...')
         crom.refresh_cache()
         send_message(channel_debug, f'{sender}: Cache refreshed!')
+        log.info(f'Cache refreshed by {sender} in channel {channel_debug}')
         #add db.py commands here too
     elif command == "irc":
         send_message(channel_debug, f'{sender}: https://www.rfc-editor.org/rfc/rfc1459.html')
@@ -417,6 +473,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
+            log.exception(f"Error: {e}")
 
     elif command == "brsearch" or command == "brs":
         try:
@@ -440,7 +497,41 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
-
+            log.exception(f"Error: {e}")
+    elif command == "ping":
+        send_message(channel_debug, f'{sender}: Pong!')
+        log.warn(f'{sender} used the ping command in channel {channel_debug}')
+    elif command == "ping2":
+        handle.write(f'PING {server} irc.scpwiki.com :ping\r\n')
+        handle.flush()
+        send_message(channel_debug, "e")
+        log.warn(f'{sender} used the ping2 command in channel {channel_debug}')
+        log.debug('^ that shouldnt happen')
+    elif command == "diagnose":
+        log.warn(f'{sender} used the diagnose command in channel {channel_debug}')
+        # pinging the server
+        handle.write(f'PING {server} irc.scpwiki.com :ping\r\n')
+        handle.flush()
+        if "PONG" in handle.readline().strip():
+            send_message(channel_debug, f'{sender}: confirmed connection with IRC server')
+        else:
+            send_message(channel_debug, f'{sender}: connection with IRC server failed') 
+            log.error(f'{sender} failed to connect to IRC server')
+        # check crom
+        # ignore the error
+        if crom.wikisearch("SCP-049")["title"] == "SCP-049":
+            send_message(channel_debug, f'{sender}: confirmed connection with Crom API')
+        else:
+            send_message(channel_debug, f'{sender}: connection with Crom API failed')
+            log.error(f'{sender} failed to connect to Crom API')
+        #check wikidot
+        output = crom.check_wikidot()
+        if output == 200:
+            send_message(channel_debug, f'{sender}: confirmed connection with Wikidot ({output})')
+        else:
+            send_message(channel_debug, f'{sender}: connection with Wikidot failed. Error code: {output}')
+            log.error(f'{sender} failed to connect to Wikidot. Error code: {output}')
+        output = ""
 ##################################################################################
 ##################################################################################
 
@@ -452,10 +543,11 @@ if __name__ == "__main__":
         ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ircsock = context.wrap_socket(ircsock, server_hostname=server)
         ircsock.connect((server, port))
+        log.info("Connected to IRC server")
         handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
         print('NICK', nick, file=handle)
         print('USER', nick, nick, nick, ':'+realname, file=handle)
-        
+        log.info("Sent NICK and USER commands")
         
         
         joined = False
@@ -466,7 +558,7 @@ if __name__ == "__main__":
             
             #sasl auth
             #DONT TOUCH THIS
-            if "Found" in line:
+            if "Found" in line: 
                 sasl = "Mando-Bot Mando-Bot PASSWORD" #remember to hide password
                 sasl = sasl.encode("utf-8")
                 sasl = base64.b64encode(sasl)
@@ -478,21 +570,26 @@ if __name__ == "__main__":
                 print('AUTHENTICATE', sasl, file=handle)
                 print('AUTHENTICATE', sasl)
                 print('CAP END', file=handle)
+                print('CAP END')
+                log.info("Sent SASL auth")
             # Check for PING and respond with PONG
             if "PING" in line:
                 pong = "PONG :" + line.split(':')[1]
                 handle.write(pong + '\r\n')
                 handle.flush()
-                
+                log.info("Sent PONG")
                 # Join channel after first PING (server ready)
                 if not joined:
                     handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
                     time.sleep(2)
-                    for x in range(0, len(channel_list)):
-                        handle.write(f'JOIN {channel_list[x]}\r\n')
+                    log.info("Sent IDENTIFY")
+                    for x in channel_list:
+                        handle.write(f'JOIN {x}\r\n')
+                        log.info(f"Joined {x}")
                     handle.write(f'MODE {nick} :+B\r\n')
                     handle.flush()
                     joined = True
+                    log.info("Joined channel(s)")
                 continue
 
             # Check for PRIVMSG (chat messages)
@@ -514,26 +611,25 @@ if __name__ == "__main__":
 
                     # Handle the command
                     if history_bypass == 1:
-                        if handle_command(command, args, handle, sender, channel_temp, full_host):
-                            break
+                        log.info(f"command sent: {command} {args} ({sender} -> {channel_temp})")
+                        handle_command(command, args, handle, sender, channel_temp, full_host)
+                        
+                            # break
                 history_check = line.split(":!!clear")
                 history_channel = line #may break
                 if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
                     history_bypass = 1
                     handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
                     handle.flush()
+                    log.info("manual history clear")
     except Exception as e:
         print(f"Error: {e}")
+        log.critical(f"Error: {e}")
         # break
     finally:
         try:
-            context = ssl.create_default_context()
-            ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            ircsock = context.wrap_socket(ircsock)
-            handle = ircsock.makefile(mode='rw', buffering=1, encoding='utf-8', newline='\r\n')
-            handle.write('QUIT :\r\n')
-            handle.flush()
             sys.exit(1)
-        except Exception:
+        except Exception as e:
+            log.critical(f"Error: sys.exit(1) failed: {e}")
             pass
 # HIDE PASSWORD
