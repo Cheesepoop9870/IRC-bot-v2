@@ -5,16 +5,17 @@ import asyncio
 import aiohttp
 import time
 import threading
+import logging as log
 from typing import List, Dict, Any
 output = []
 url = "https://api.crom.avn.sh" #backup api https://hoppscotch.io/graphql |https://api.crom.avn.sh/graphql
 
 # Simple in-memory cache
 _cache = {}
-CACHE_DURATION = 300  # 5 minutes
+CACHE_DURATION = 20  # Cache duration in seconds
 _cache_thread = None
 _cache_running = False
-
+# code = 0
 
 
 def is_cache_valid(timestamp: float) -> bool:
@@ -51,6 +52,9 @@ def _fetch_latest_data():
         except Exception as e:
             print(f"Error in parallel fetch: {e}")
             print("Falling back to sequential method")
+            # Log the error
+            log.error(f"Error in parallel fetch: {e}")
+            log.info("Falling back to sequential method")
             # Fallback to sequential method
             results = []
             for name in article_names:
@@ -59,11 +63,15 @@ def _fetch_latest_data():
                     if result:
                         results.append(result)
                 except Exception:
+                    # Log the error
+                    log.error(f"Error fetching article {name}")
                     continue
         
         return results
     except Exception as e:
         print(f"Error fetching latest data: {e}")
+        # Log the error
+        log.error(f"Error fetching latest data: {e}")
         return []
 
 def _background_cache_refresh():
@@ -72,14 +80,18 @@ def _background_cache_refresh():
     while _cache_running:
         try:
             print("Background: Refreshing cache...")
+            log.info("Background: Refreshing cache...")
             results = _fetch_latest_data()
             if results:
                 _cache["latest_articles"] = (results, time.time())
                 print(f"Background: Cache updated with {len(results)} articles")
+                log.info(f"Background: Cache updated with {len(results)} articles")
             else:
                 print("Background: Failed to fetch new data, keeping existing cache")
+                log.warning("Background: Failed to fetch new data, keeping existing cache")
         except Exception as e:
             print(f"Background cache refresh error: {e}")
+            log.error(f"Background cache refresh error: {e}")
         
         # Wait 5 minutes before next refresh
         for _ in range(300):  # 300 seconds = 5 minutes
@@ -95,16 +107,19 @@ def start_background_cache():
         _cache_thread = threading.Thread(target=_background_cache_refresh, daemon=True)
         _cache_thread.start()
         print("Background cache refresh started")
+        log.info("Background cache refresh started")
 
 def stop_background_cache():
     """Stop the background cache refresh thread"""
     global _cache_running
     _cache_running = False
     print("Background cache refresh stopped")
+    log.info("Background cache refresh stopped")
 def refresh_cache():
     """Manually refresh the cache with fresh data"""
     global _cache
     print("Manually refreshing cache...")
+    log.info("Manually refreshing cache...")
     # Clear existing cache
     cache_key = "latest_articles"
     if cache_key in _cache:
@@ -117,9 +132,11 @@ def refresh_cache():
         # Cache the new results
         _cache[cache_key] = (results, time.time())
         print(f"Cache manually refreshed with {len(results)} articles")
+        log.info(f"Cache manually refreshed with {len(results)} articles")
         return results
     else:
         print("Failed to refresh cache - no data retrieved")
+        log.warning("Failed to refresh cache - no data retrieved")
         return []
 
 aubody = """
@@ -404,6 +421,7 @@ async def wikisearch_async(session: aiohttp.ClientSession, query: str) -> Dict[s
                 return None #its fine
     except Exception as e:
         print(f"Error in async wikisearch: {e}")
+        log.error(f"Error in async wikisearch: {e}")
         return None #its fine
 
 async def fetch_latest_parallel(article_names: List[str]) -> List[Dict[str, Any]]:
@@ -449,6 +467,8 @@ def latest():
         
     except Exception as e:
         print(f"Error fetching page names: {e}")
+        # Log the error
+        log.error(f"Error fetching page names: {e}")
         # Fall back to cached data if available
         cache_key = "latest_articles"
         if cache_key in _cache:
@@ -467,11 +487,13 @@ def latest():
         # If page names haven't changed and cache is valid, return cached data
         if is_cache_valid(timestamp) and cached_page_names == current_article_names:
             print("Using cached data - no new pages")
+            log.info("Using cached data - no new pages")
             return cached_data
         
         # If page names have changed, only fetch new pages
         if cached_page_names != current_article_names:
             print("New pages detected, fetching only new data...")
+            log.info("New pages detected, fetching only new data...")
             new_pages = [name for name in current_article_names if name not in cached_page_names]
             
             if new_pages:
@@ -504,11 +526,13 @@ def latest():
                     
                 except Exception as e:
                     print(f"Error fetching new pages: {e}")
+                    log.error(f"Error fetching new pages: {e}")
                     # Fall back to existing cache
                     return cached_data
             else:
                 # No new pages, but check if titles have changed for existing pages
                 print("Checking for title changes in existing pages...")
+                log.info("Checking for title changes in existing pages...")
                 pages_to_update = []
                 
                 # Check each cached page to see if its title still matches
@@ -555,6 +579,7 @@ def latest():
                         
                     except Exception as e:
                         print(f"Error updating changed titles: {e}")
+                        log.error(f"Error updating changed titles: {e}")
                         return cached_data
                 else:
                     # No changes, just update timestamp and return existing data
@@ -564,6 +589,7 @@ def latest():
     
     # If no valid cache exists, fetch all data
     print("Fetching fresh data...")
+    log.info("Fetching fresh data...")
     results = _fetch_latest_data()
     
     # Cache the results and page names
@@ -666,6 +692,10 @@ def br_wikisearch(query):
 def cache_set(time):
     global CACHE_DURATION
     CACHE_DURATION = time
+
+def check_wikidot():
+  code = requests.get("https://scp-wiki.wikidot.com").status_code
+  return code
 
 if __name__ == "__main__":
   output = wikisearch("4566")
