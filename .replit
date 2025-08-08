@@ -26,13 +26,13 @@ task = "shell.exec"
 args = "python3 crom.py"
 
 [[workflows.workflow]]
-name = "crom2"
+name = "crom3"
 mode = "parallel"
 author = 30770619
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 crom2.py"
+args = "python3 crom3.py"
 
 [[workflows.workflow]]
 name = "db"
@@ -42,3 +42,21 @@ author = 30770619
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 db.py"
+
+[[workflows.workflow]]
+name = "test"
+mode = "parallel"
+author = 30770619
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 test.py"
+
+[[workflows.workflow]]
+name = "log"
+mode = "parallel"
+author = 30770619
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 log.py"
