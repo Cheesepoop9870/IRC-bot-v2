@@ -5,7 +5,6 @@ username = 'cheesepoop9870'
 password = 'Ilovestarwars321?'
 
 my_key = PastebinAPI.generate_user_key("aBxmsmmYtoEP3qOh1sZmMS4LVQvj7AsB", "cheesepoop9870","Ilovestarwars321?")
-
 print(my_key)
 
 try:
