@@ -93,8 +93,8 @@ def _background_cache_refresh():
             print(f"Background cache refresh error: {e}")
             log.error(f"Background cache refresh error: {e}")
         
-        # Wait 5 minutes before next refresh
-        for _ in range(300):  # 300 seconds = 5 minutes
+        # Wait 20 seconds before next refresh
+        for _ in range(20):  # 20 seconds
             if not _cache_running:
                 break
             time.sleep(1)
