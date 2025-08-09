@@ -611,19 +611,23 @@ if __name__ == "__main__":
                 handle.write(pong + '\r\n')
                 handle.flush()
                 log.info("Sent PONG")
-                # Join channel after first PING (server ready)
+                # Send identification after first PING (server ready)
                 if not joined:
                     handle.write('PRIVMSG NickServ :identify Ilovestarwars321?\r\n') #remember to hide password
-                    time.sleep(2)
                     log.info("Sent IDENTIFY")
-                    for x in channel_list:
-                        handle.write(f'JOIN {x}\r\n')
-                        handle.flush()
-                        log.info(f"Joined {x}")
-                    handle.write(f'MODE {nick} :+B\r\n')
+                continue
+            
+            # Check for successful identification before joining channels
+            if "you are now identified as Mando-Bot" in line and not joined:
+                time.sleep(1)  # Small delay after identification
+                for x in channel_list:
+                    handle.write(f'JOIN {x}\r\n')
                     handle.flush()
-                    joined = True
-                    log.info("Joined channel(s)")
+                    log.info(f"Joined {x}")
+                handle.write(f'MODE {nick} :+B\r\n')
+                handle.flush()
+                joined = True
+                log.info("Joined channel(s) after identification")
                 continue
 
             # Check for PRIVMSG (chat messages)
