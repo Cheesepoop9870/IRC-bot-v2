@@ -32,8 +32,8 @@ def upload_paste(api_dev_key, user_key, paste_code, paste_name, paste_format, pa
         paste_private (int): The privacy level of the paste.
         paste_expire_date (str): The expiration date of the paste.
         """
-  # user_key = generate_user_key(api_dev_key, username, password)
-    requests.post("https://pastebin.com/api/api_post.php", data={"api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_code, "api_paste_private": paste_private, "api_paste_name": paste_name, "api_paste_expire_date": paste_expire_date, "api_paste_format": paste_format, "api_user_key": user_key})
+    response = requests.post("https://pastebin.com/api/api_post.php", data={"api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_code, "api_paste_private": paste_private, "api_paste_name": paste_name, "api_paste_expire_date": paste_expire_date, "api_paste_format": paste_format, "api_user_key": user_key})
+    return response.text
 def get_paste(api_dev_key, user_key, paste_key):
     """Get a paste from Pastebin.
     Args:
