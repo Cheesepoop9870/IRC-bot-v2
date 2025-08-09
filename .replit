@@ -15,7 +15,6 @@ run = ["python3", "main.py"]
 deploymentTarget = "cloudrun"
 
 [workflows]
-runButton = "test"
 
 [[workflows.workflow]]
 name = "crom"

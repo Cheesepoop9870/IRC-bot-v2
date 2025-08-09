@@ -36,7 +36,7 @@ realname = 'v1.2.8-alpha'  # This will be displayed in WHOIS
 port = 6697
 channel_list = ["#cheesepoop9870", "#facility36", "#neutralzone", "#site22"]
 # channel_list = db.get_channels()
-
+reg_channel_list = []
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes"} # Add admin usernames/hosts here
 
@@ -547,7 +547,24 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f'{sender}: connection with Wikidot failed. Error code: {output}')
             log.error(f'{sender} failed to connect to Wikidot. Error code: {output}')
         output = ""
-    elif command == "logs"
+    elif command == "logs":
+        with open("app.log", "r") as file:
+            log.info("Reading logs")
+            content = file.read()
+            # lines = content.split('\n')
+            # for line in lines:
+            #     if line.strip():  # Only print non-empty lines
+            #         print(line.strip())
+                    
+        # Upload to pastebin
+        log.info("Uploading logs to pastebin")
+        log.info("Generating user key")
+        user_key = pastebin2.generate_user_key(pastebin2.api_dev_key, pastebin2.username, pastebin2.password)
+        log.info(f"User key generated: {user_key}")
+        result = pastebin2.upload_paste(pastebin2.api_dev_key, user_key, content.strip(), "test", "text", 0, "10M")
+        log.info("Uploaded logs to pastebin")
+        log.info(f"Upload result: {result}")
+        send_message(channel_debug, f'{sender}: Logs: {result}')
 ##################################################################################
 ##################################################################################
 
@@ -601,6 +618,7 @@ if __name__ == "__main__":
                     log.info("Sent IDENTIFY")
                     for x in channel_list:
                         handle.write(f'JOIN {x}\r\n')
+                        handle.flush()
                         log.info(f"Joined {x}")
                     handle.write(f'MODE {nick} :+B\r\n')
                     handle.flush()
