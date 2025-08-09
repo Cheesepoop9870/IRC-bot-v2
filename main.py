@@ -9,18 +9,21 @@ import crom
 import base64
 import json
 import logging as log
+import pastebin2
 from local_googlesearch_python import search
-from youtube_search import YoutubeSearch as ytsearch    
+from youtube_search import YoutubeSearch as ytsearch 
+
+# from pastebin import PastebinAPI
 #for infinite rolls
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
 #note: add !pingall message availibility
 
 #logging stuff
 log.basicConfig(
-    level=log.DEBUG,  
+    level=log.INFO,  
     format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
     filename='app.log',  # Log to a file named 'app.log'
-    filemode='a',         # Append to the file (default is 'a', 'w' for overwrite)
+    filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
     datefmt='%H:%M:%S',
 )
 
@@ -139,11 +142,13 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 rng = r.randint(1, 2)
                 if rng == 1:
                   send_message(channel_debug, f" {sender} rolled {commandargs2[0]}d{commandargs2[1]} and got {r.randint(-1000000000000000000000000000000000000000000000000000000, 1000000000000000000000000000000000000000000000000000000)}")
+                  return
                 else: #rng == 2
                     send_message(channel_debug, f"{sender} rolled {commandargs2[0]}d{commandargs2[1]} and got {infindex[r.randint(0, len(infindex)-1)]} ")
                 rng = 0
                 commandargs = ""
                 commandargs2 = []
+                return
             else: #normal roll
               for i in range(int(commandargs2[0])):
                 commandargsoutput.append(r.randint(1, int(commandargs2[1])))
@@ -160,6 +165,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             cflag_plus_roll = 0
         except IndexError:
             send_message(channel_debug, 'Invalid dice format. use 1d10 or similar')
+            log.warning(f'{sender} tried to use the roll command in channel {channel_debug} but got an index error')
         except Exception as e:
             send_message(channel_debug, f'Error: {e}')
             log.exception(f"Error: {e}")
@@ -297,6 +303,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                         send_message(channel_debug, f'Latest search range = {latest_range}')
                     except ValueError:
                         send_message(channel_debug, 'Error! latest_range must be an integer')
+                        log.warn(f'{sender} tried to set latest_range to {latest_range} in channel {channel_debug}')
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command.')
                     log.warning(f'{sender} tried to use the latest_range command in channel {channel_debug}')
@@ -310,6 +317,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                         log.info(f'Cache duration set to {args[2]} by {sender} in channel {channel_debug}')
                     except ValueError:
                         send_message(channel_debug, 'Error! cache duration must be an integer')
+                        log.warn(f'{sender} tried to set cache duration to {args[2]} in channel {channel_debug}')
                     except Exception as e:
                         send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
                         log.exception(f"Error: {e}")
@@ -356,6 +364,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
+            log.warning(f'{sender} tried to use the search command in channel {channel_debug} but got no results')
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
@@ -380,6 +389,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             handle.flush()
             log.info(f'Reboot command used by {sender} in channel {channel_debug}')
             os.system("python3 main.py")
+            log.info("Rebooted")
+            os.system('cls' if os.name == 'nt' else 'clear')
             sys.exit(0)
         else:
             send_message(channel_debug, "Sorry, you are not authorized to use this command.")
@@ -411,6 +422,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
+            log.warning(f'{sender} tried to use the author command in channel {channel_debug} but got no results')
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
@@ -434,6 +446,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
                 except IndexError:
                     send_message(channel_debug, f'{sender}: No results found!')
+                    log.warning(f'{sender} tried to use the latest command in channel {channel_debug} but got no results')
                     return
                 except Exception as e:
                     send_message(channel_debug, f'{sender}: Error! String: {e}')
@@ -470,6 +483,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
+            log.warning(f'{sender} tried to use the brauthor command in channel {channel_debug} but got no results')
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
@@ -494,6 +508,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f"{sender}: {output['title']} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
+            log.warning(f'{sender} tried to use the brsearch command in channel {channel_debug} but got no results')
             return
         except Exception as e:
             send_message(channel_debug, f'{sender}: Error! String: {e}')
@@ -532,6 +547,24 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f'{sender}: connection with Wikidot failed. Error code: {output}')
             log.error(f'{sender} failed to connect to Wikidot. Error code: {output}')
         output = ""
+    elif command == "logs":
+        with open("app.log", "r") as file:
+            log.info("Reading logs")
+            content = file.read()
+            # lines = content.split('\n')
+            # for line in lines:
+            #     if line.strip():  # Only print non-empty lines
+            #         print(line.strip())
+                    
+        # Upload to pastebin
+        log.info("Uploading logs to pastebin")
+        log.info("Generating user key")
+        user_key = pastebin2.generate_user_key(pastebin2.api_dev_key, pastebin2.username, pastebin2.password)
+        log.info(f"User key generated: {user_key}")
+        result = pastebin2.upload_paste(pastebin2.api_dev_key, user_key, content.strip(), "test", "text", 0, "10M")
+        log.info("Uploaded logs to pastebin")
+        log.info(f"Upload result: {result}")
+        send_message(channel_debug, f'{sender}: Logs: {result}')
 ##################################################################################
 ##################################################################################
 
