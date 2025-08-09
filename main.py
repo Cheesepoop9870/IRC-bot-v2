@@ -20,7 +20,7 @@ infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "gla
 
 #logging stuff
 log.basicConfig(
-    level=log.INFO,  
+    level=log.DEBUG,  
     format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
     filename='app.log',  # Log to a file named 'app.log'
     filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
@@ -618,7 +618,7 @@ if __name__ == "__main__":
                 continue
             
             # Check for successful identification before joining channels
-            if "you are now identified as Mando-Bot" in line and not joined:
+            if "You are now logged in as Mando-Bot" in line and not joined:
                 time.sleep(1)  # Small delay after identification
                 for x in channel_list:
                     handle.write(f'JOIN {x}\r\n')
