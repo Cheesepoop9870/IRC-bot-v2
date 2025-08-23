@@ -1,6 +1,6 @@
 import requests
 # from pastebin import PastebinAPI
-
+import logging as log
 api_dev_key = 'API_KEY'
 username = 'USER'
 password = 'PASSWORD'
@@ -12,6 +12,7 @@ def generate_user_key(api_dev_key, username, password):
         username (str): The Pastebin username.
         password (str): The Pastebin password.
     """
+    log.info("Generating user key")
     login_url = "https://pastebin.com/api/api_login.php"
     login_payload = {
         "api_dev_key": api_dev_key,
@@ -19,6 +20,8 @@ def generate_user_key(api_dev_key, username, password):
         "api_user_password": password
     }
     login_request = requests.post(login_url, login_payload)
+    log.info(f"Login request status code: {login_request.status_code}")
+    log.info(f"User key generated: {login_request.text}")
     return login_request.text
 
 def upload_paste(api_dev_key, user_key, paste_code, paste_name, paste_format, paste_private, paste_expire_date):
