@@ -12,7 +12,7 @@ url = "https://api.crom.avn.sh" #backup api https://hoppscotch.io/graphql |https
 
 # Simple in-memory cache
 _cache = {}
-CACHE_DURATION = 20  # Cache duration in seconds
+CACHE_DURATION = 60  # Cache duration in seconds
 _cache_thread = None
 _cache_running = False
 # code = 0
@@ -93,8 +93,8 @@ def _background_cache_refresh():
             print(f"Background cache refresh error: {e}")
             log.error(f"Background cache refresh error: {e}")
         
-        # Wait 5 minutes before next refresh
-        for _ in range(300):  # 300 seconds = 5 minutes
+        # Wait 20 seconds before next refresh
+        for _ in range(CACHE_DURATION):  # 20 seconds
             if not _cache_running:
                 break
             time.sleep(1)
@@ -530,62 +530,10 @@ def latest():
                     # Fall back to existing cache
                     return cached_data
             else:
-                # No new pages, but check if titles have changed for existing pages
-                print("Checking for title changes in existing pages...")
-                log.info("Checking for title changes in existing pages...")
-                pages_to_update = []
-                
-                # Check each cached page to see if its title still matches
-                for cached_item in cached_data:
-                    cached_title = cached_item.get("title", "")
-                    page_name = None
-                    
-                    # Find the corresponding page name for this cached item
-                    for name in current_article_names:
-                        if name == cached_title or cached_title.startswith(name):
-                            page_name = name
-                            break
-                    
-                    # If we can't find a matching page name, or if title doesn't match exactly, update it
-                    if not page_name or cached_title != page_name:
-                        if page_name:
-                            pages_to_update.append(page_name)
-                
-                if pages_to_update:
-                    try:
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        updated_page_results = loop.run_until_complete(fetch_latest_parallel(pages_to_update))
-                        loop.close()
-                        
-                        # Update only the changed pages in cache
-                        updated_results = []
-                        for name in current_article_names:
-                            # Check if this page was updated
-                            updated_data = next((item for item in updated_page_results if item.get("title") == name), None)
-                            if updated_data:
-                                updated_results.append(updated_data)
-                            else:
-                                # Keep existing data
-                                existing_data = next((item for item in cached_data if item.get("title") == name), None)
-                                if existing_data:
-                                    updated_results.append(existing_data)
-                        
-                        # Update cache
-                        _cache[cache_key] = (updated_results, time.time())
-                        _cache[cached_page_names_key] = (current_article_names, time.time())
-                        
-                        return updated_results
-                        
-                    except Exception as e:
-                        print(f"Error updating changed titles: {e}")
-                        log.error(f"Error updating changed titles: {e}")
-                        return cached_data
-                else:
-                    # No changes, just update timestamp and return existing data
-                    _cache[cache_key] = (cached_data, time.time())
-                    _cache[cached_page_names_key] = (current_article_names, time.time())
-                    return cached_data
+                # No new pages, just update timestamp and return existing data
+                _cache[cache_key] = (cached_data, time.time())
+                _cache[cached_page_names_key] = (current_article_names, time.time())
+                return cached_data
     
     # If no valid cache exists, fetch all data
     print("Fetching fresh data...")
