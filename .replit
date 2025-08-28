@@ -1,4 +1,4 @@
-entrypoint = "main.py"
+entrypoint = "main/main.py"
 modules = ["nodejs-20", "python-3.11"]
 
 [nix]
@@ -11,10 +11,11 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["python3", "main.py"]
+run = ["sh", "-c", "python3 main/main.py"]
 deploymentTarget = "cloudrun"
 
 [workflows]
+runButton = "Run Bot"
 
 [[workflows.workflow]]
 name = "crom"
@@ -69,3 +70,12 @@ author = 30770619
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 pastebin2.py"
+
+[[workflows.workflow]]
+name = "Run Bot"
+mode = "parallel"
+author = 30770619
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 main/main.py"

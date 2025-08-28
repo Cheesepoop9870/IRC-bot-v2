@@ -12,7 +12,7 @@ url = "https://api.crom.avn.sh" #backup api https://hoppscotch.io/graphql |https
 
 # Simple in-memory cache
 _cache = {}
-CACHE_DURATION = 20  # Cache duration in seconds
+CACHE_DURATION = 60  # Cache duration in seconds
 _cache_thread = None
 _cache_running = False
 # code = 0
@@ -94,7 +94,7 @@ def _background_cache_refresh():
             log.error(f"Background cache refresh error: {e}")
         
         # Wait 20 seconds before next refresh
-        for _ in range(20):  # 20 seconds
+        for _ in range(CACHE_DURATION):  # 20 seconds
             if not _cache_running:
                 break
             time.sleep(1)
