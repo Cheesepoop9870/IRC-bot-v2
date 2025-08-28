@@ -3,7 +3,7 @@ import requests
 import logging as log
 import os
 api_dev_key = os.getenv("PASTEBIN_API_KEY")
-username = 'cheesepoop9870'
+username = os.getenv("USERNAME")
 password = os.getenv("MAIN_PASSWORD")
 
 def generate_user_key(api_dev_key, username, password):
