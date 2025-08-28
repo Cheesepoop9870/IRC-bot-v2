@@ -58,7 +58,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     def send_message(channel, message):
         # Replace 'ops' with '0ps' in the message
         message = message.replace('ops', '0ps')
-        
+
         if len(message) <= 433:
             print(f'PRIVMSG {channel} :{message}')
             handle.write(f'PRIVMSG {channel} :{message}\r\n')
@@ -81,11 +81,16 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 print(f'PRIVMSG {channel} :{chunk}')
                 handle.write(f'PRIVMSG {channel} :{chunk}\r\n')
                 handle.flush()
-                
-    def checkperms(full_host2):
+
+    def checkperms(full_host2, sender2):
         for regex in ADMIN_USER_REGEX:
             if re.search(regex, full_host2):
                 return True
+        # Check against ADMIN_USERS set as well
+        if sender2 in ADMIN_USERS:
+            return True
+        return False
+
     #variables
     output = []
     output2 = []
@@ -103,8 +108,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         send_message(channel_debug, f'Hello, {sender}!')
 
     elif command == "quit" or command == "!quit":
-        
-        if checkperms(full_host):
+
+        if checkperms(full_host, sender):
             handle.write(f'QUIT :Quit command used by {sender} in channel {channel_debug}\r\n')
             handle.flush()
             log.info(f'Quit command used by {sender} in channel {channel_debug}')
@@ -120,8 +125,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         send_message(channel_debug, 'List of Commands: https://scp-sandbox-3.wikidot.com/mandobot-commands')
 
     elif command == "setup":
-        
-        if checkperms(full_host):
+
+        if checkperms(full_host, sender):
             send_message(channel_debug, 'Setting up the bot...')
             send_message(channel_debug, 'Bot setup complete!')
             #time.sleep(3)
@@ -199,8 +204,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         handle.flush()
 
     elif command == "leave": #add multiple channel support
-        
-        if checkperms(full_host):
+
+        if checkperms(full_host, sender):
             if len(args[0])> 0:
                 handle.write(f'PART {args[0]}\r\n')
                 channel_list.remove(args[0])
@@ -281,8 +286,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
-                
-                if checkperms(full_host):
+
+                if checkperms(full_host, sender):
                     global debug_flag
                     debug_flag = debug_flag + 1
                     if debug_flag > 1:
@@ -294,11 +299,11 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')    
                     log.warning(f'{sender} tried to use the debug command in channel {channel_debug}')
             elif args[1] == "latest_range":
-                
-                if checkperms(full_host):
+
+                if checkperms(full_host, sender):
                     global latest_range
                     latest_range = args[2]
-                    
+
                     try:
                         if int(latest_range) > 5:
                             send_message(channel_debug, 'Error! latest_range cannot be greater than 5')
@@ -312,8 +317,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
                     log.warning(f'{sender} tried to use the latest_range command in channel {channel_debug}')
             elif args[1] == "cache":
-                
-                if checkperms(full_host):
+
+                if checkperms(full_host, sender):
                     try:
                         crom.cache_set(int(args[2]))
                         send_message(channel_debug, f'Cache duration = {args[2]}')
@@ -353,7 +358,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             debug(0, output)
             debug(1, output4)
             debug(2, output4[5])
-            
+
             #note: errors wont cause a poblem
             if output["title2"] == []: #no alt title
                 output["title2"] = ""
@@ -374,8 +379,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             log.exception(f"Error: {e}")
 
     elif command == "raw":
-        
-        if checkperms(full_host):
+
+        if checkperms(full_host, sender):
             args = " ".join(args)
             handle.write(f'{args}\r\n')
             handle.flush()
@@ -384,8 +389,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the raw command in channel {channel_debug}')
     elif command == "reboot" or command == "!reboot":
-        
-        if checkperms(full_host):
+
+        if checkperms(full_host, sender):
             handle.write("QUIT :Rebooting\r\n")
             handle.flush()
             log.info(f'Reboot command used by {sender} in channel {channel_debug}')
@@ -558,7 +563,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             # for line in lines:
             #     if line.strip():  # Only print non-empty lines
             #         print(line.strip())
-                    
+
         # Upload to pastebin
         log.info("Uploading logs to pastebin")
         log.info("Generating user key")
@@ -570,14 +575,14 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         send_message(channel_debug, f'{sender}: Logs: {result}')
 
     elif command == "cachestop":
-        if checkperms(full_host):
+        if checkperms(full_host, sender):
             log.info("stopping cache")
             crom.stop_background_cache()
             send_message(channel_debug, f"{sender}: Automatic Cache stopped (reboot with !l)")
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the setup command in channel {channel_debug}')
-        
+
 ##################################################################################
 ##################################################################################
 
@@ -594,14 +599,14 @@ if __name__ == "__main__":
         print('NICK', nick, file=handle)
         print('USER', nick, nick, nick, ':'+realname, file=handle)
         log.info("Sent NICK and USER commands")
-        
-        
+
+
         joined = False
         history_bypass = 0
         while True:
             line = handle.readline().strip()
             print(line)
-            
+
             #sasl auth
             #DONT TOUCH THIS
             if "Found" in line: 
@@ -629,7 +634,7 @@ if __name__ == "__main__":
                     handle.write(f'PRIVMSG NickServ :identify {password}\r\n') #remember to hide password
                     log.info("Sent IDENTIFY")
                 continue
-            
+
             # Check for successful identification before joining channels
             if f"You are now logged in as {nick}" in line and not joined:
                 time.sleep(1)  # Small delay after identification
@@ -642,7 +647,7 @@ if __name__ == "__main__":
                 joined = True
                 log.info("Joined channel(s) after identification")
                 continue
-            
+
             # Check for PRIVMSG (chat messages)
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
@@ -650,7 +655,7 @@ if __name__ == "__main__":
                 # Extract the full host (nick!user@host)
                 full_host = line.split(' PRIVMSG')[0][1:]
                 # Extract the channel
-                channel_temp = line.split('PRIVMSG')[1].split(':')[0].strip()
+                channel_temp = line.split(' PRIVMSG')[1].split(':')[0].strip()
                 # Extract the command part
 
                 msg_parts = line.split(':!')
@@ -666,7 +671,7 @@ if __name__ == "__main__":
                             channel_temp = sender
                         log.info(f"Command sent: {command} {args} ({sender} -> {channel_temp})")
                         handle_command(command, args, handle, sender, channel_temp, full_host)
-                        
+
                             # break
                 history_check = line.split(":!!clear")
                 history_channel = line #may break
