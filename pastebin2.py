@@ -1,9 +1,10 @@
 import requests
 # from pastebin import PastebinAPI
 import logging as log
-api_dev_key = 'API_KEY'
-username = 'USER'
-password = 'PASSWORD'
+import os
+api_dev_key = os.getenv("PASTEBIN_API_KEY")
+username = 'cheesepoop9870'
+password = os.getenv("MAIN_PASSWORD")
 
 def generate_user_key(api_dev_key, username, password):
     """Generate a user key for Pastebin API.
