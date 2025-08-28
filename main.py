@@ -21,7 +21,7 @@ infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "gla
 
 #logging stuff
 log.basicConfig(
-    level=log.INFO,  
+    level=log.DEBUG,  
     format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
     filename='app.log',  # Log to a file named 'app.log'
     filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
@@ -33,6 +33,7 @@ server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870, #Facility36'
 # channel_debug = ""
 nick = 'Mando-Bot'
+password = os.getenv("MAIN_PASSWORD")
 realname = 'v1.2.8-alpha'  # This will be displayed in WHOIS
 port = 6697
 channel_list = ["#cheesepoop9870", "#facility36", "#neutralzone", "#site22", "#Magnishideout"]
@@ -191,7 +192,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, f'{sender}: Invalid format. Use !join #channel')
         elif "#site19" in args[0] or "#site17" in args[0]:
             send_message(channel_debug, f'{sender}: Sorry, Mando-Bot is not authorized to join that channel. Action logged.')
-            log.warning(f'{sender} tried to join {args[0]} in channel {channel_debug} but got an error')
+            log.warning(f'{sender} tried to join {args[0]} in channel {channel_debug}')
         else:
           send_message(channel_debug, f'Joined {args[0]}')
           log.info(f"Joined {args[0]}")
@@ -388,7 +389,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             handle.write("QUIT :Rebooting\r\n")
             handle.flush()
             log.info(f'Reboot command used by {sender} in channel {channel_debug}')
-            os.system("python3 main.py")
+            os.system("python3 main/main.py")
             log.info("Rebooted")
             os.system('cls' if os.name == 'nt' else 'clear')
             sys.exit(0)
@@ -563,11 +564,20 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         log.info("Generating user key")
         user_key = pastebin2.generate_user_key(pastebin2.api_dev_key, pastebin2.username, pastebin2.password)
         log.info(f"User key generated: {user_key}")
-        result = pastebin2.upload_paste(pastebin2.api_dev_key, user_key, content.strip(), "test", "text", 0, "10M")
+        result = pastebin2.upload_paste(pastebin2.api_dev_key, user_key, content.strip(), "test", "text", 0, "1D")
         log.info("Uploaded logs to pastebin")
         log.info(f"Upload result: {result}")
         send_message(channel_debug, f'{sender}: Logs: {result}')
 
+    elif command == "cachestop":
+        if checkperms(full_host):
+            log.info("stopping cache")
+            crom.stop_background_cache()
+            send_message(channel_debug, f"{sender}: Automatic Cache stopped (reboot with !l)")
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the setup command in channel {channel_debug}')
+        
 ##################################################################################
 ##################################################################################
 
@@ -595,7 +605,7 @@ if __name__ == "__main__":
             #sasl auth
             #DONT TOUCH THIS
             if "Found" in line: 
-                sasl = "Mando-Bot Mando-Bot PASSWORD?" #remember to hide password
+                sasl = f"{nick} {nick} {password}" #remember to hide password
                 sasl = sasl.encode("utf-8")
                 sasl = base64.b64encode(sasl)
                 print('CAP REQ :sasl', file=handle)
@@ -616,7 +626,7 @@ if __name__ == "__main__":
                 log.info("Sent PONG")
                 # Send identification after first PING (server ready)
                 if not joined:
-                    handle.write('PRIVMSG NickServ :identify PASSWORD\r\n') #remember to hide password
+                    handle.write(f'PRIVMSG NickServ :identify {password}\r\n') #remember to hide password
                     log.info("Sent IDENTIFY")
                 continue
             
@@ -632,7 +642,7 @@ if __name__ == "__main__":
                 joined = True
                 log.info("Joined channel(s) after identification")
                 continue
-
+            
             # Check for PRIVMSG (chat messages)
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
@@ -654,7 +664,7 @@ if __name__ == "__main__":
                     if history_bypass == 1:
                         if channel_temp == "Mando-Bot":
                             channel_temp = sender
-                        log.info(f"command sent: {command} {args} ({sender} -> {channel_temp})")
+                        log.info(f"Command sent: {command} {args} ({sender} -> {channel_temp})")
                         handle_command(command, args, handle, sender, channel_temp, full_host)
                         
                             # break
