@@ -66,7 +66,7 @@ class SecurityManager:
         # Set these to False to disable specific security features
         self.flags = {
             'input_validation': True,      # Validate all user inputs
-            'rate_limiting': True,         # Limit command frequency
+            'rate_limiting': False,         # Limit command frequency
             'admin_authentication': True,  # Enhanced admin verification
             'command_logging': True,       # Log security events
             'session_management': True,    # Admin session tokens

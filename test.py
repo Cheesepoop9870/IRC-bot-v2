@@ -1,7 +1,5 @@
 # import pastebin2
-import os
-key = (os.getenv("GOOGLE_API_KEY"))
-print(key)
+
 # Read and display the file content
 # with open("app.log", "r") as file:
 #     content = file.read()
