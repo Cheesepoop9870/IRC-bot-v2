@@ -651,7 +651,25 @@ if __name__ == "__main__":
                 log.info("Joined channel(s) after identification")
                 continue
 
-            # Check for PRIVMSG (chat messages)
+            # Check for history bypass conditions FIRST (before command processing)
+            history_check = line.split(":!!clear")
+            history_channel = line #may break
+            chanserv_halfop = (":ChanServ!ChanServ@conflict.irc.scpwiki.com" in line and 
+                             "MODE" in line and 
+                             "+h" in line and 
+                             "Mando-Bot" in line)
+            
+            if (len(history_check) > 1 and "#cheesepoop9870" in history_channel) or ("+h" in line2 and len(line2) > 1) or chanserv_halfop:
+                history_bypass = 1
+                if chanserv_halfop:
+                    log.info("History bypass enabled by ChanServ halfop grant")
+                    log.info(f"ChanServ line: {line}")
+                else:
+                    handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
+                    handle.flush()
+                    log.info("History clear")
+
+            # Check for PRIVMSG (chat messages) - AFTER history bypass check
             log.debug(f"Received message: {line}")
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
@@ -675,24 +693,6 @@ if __name__ == "__main__":
                             channel_temp = sender
                         log.info(f"Command sent: {command} {args} ({sender} -> {channel_temp})")
                         handle_command(command, args, handle, sender, channel_temp, full_host)
-
-                            # break
-                history_check = line.split(":!!clear")
-                history_channel = line #may break
-                chanserv_halfop = (":ChanServ!ChanServ@conflict.irc.scpwiki.com" in line and 
-                                 "MODE" in line and 
-                                 "+h" in line and 
-                                 "Mando-Bot" in line)
-                
-                if (len(history_check) > 1 and "#cheesepoop9870" in history_channel) or ("+h" in line2 and len(line2) > 1) or chanserv_halfop:
-                    history_bypass = 1
-                    if chanserv_halfop:
-                        log.info("History bypass enabled by ChanServ halfop grant")
-                        log.info(f"ChanServ line: {line}")
-                    else:
-                        handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
-                        handle.flush()
-                        log.info("History clear")
     except Exception as e:
         print(f"Error: {e}")
         log.critical(f"Error: {e}")
