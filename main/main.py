@@ -21,7 +21,7 @@ infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "gla
 
 #logging stuff
 log.basicConfig(
-    level=log.DEBUG,  
+    level=log.INFO,  
     format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
     filename='app.log',  # Log to a file named 'app.log'
     filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
