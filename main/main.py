@@ -605,6 +605,7 @@ if __name__ == "__main__":
         history_bypass = 0
         while True:
             line = handle.readline().strip()
+            line2 = line
             print(line)
 
             #sasl auth
@@ -651,7 +652,7 @@ if __name__ == "__main__":
                 continue
 
             # Check for PRIVMSG (chat messages)
-            log.info(f"Received message: {line}")
+            log.debug(f"Received message: {line}")
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
                 sender = line.split('!')[0][1:]
@@ -678,11 +679,11 @@ if __name__ == "__main__":
                             # break
                 history_check = line.split(":!!clear")
                 history_channel = line #may break
-                if len(history_check) > 1 and "#cheesepoop9870" in history_channel:
+                if (len(history_check) > 1 and "#cheesepoop9870" in history_channel) or ("+h" in line2 and len(line2) > 1):
                     history_bypass = 1
                     handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
                     handle.flush()
-                    log.info("manual history clear")
+                    log.info("History clear")
     except Exception as e:
         print(f"Error: {e}")
         log.critical(f"Error: {e}")
