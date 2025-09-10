@@ -679,10 +679,16 @@ if __name__ == "__main__":
                             # break
                 history_check = line.split(":!!clear")
                 history_channel = line #may break
-                if (len(history_check) > 1 and "#cheesepoop9870" in history_channel) or ("+h" in line2 and len(line2) > 1) or (":ChanServ!ChanServ@conflict.irc.scpwiki.com MODE" in line and "+h :Mando-Bot" in line):
+                chanserv_halfop = (":ChanServ!ChanServ@conflict.irc.scpwiki.com" in line and 
+                                 "MODE" in line and 
+                                 "+h" in line and 
+                                 "Mando-Bot" in line)
+                
+                if (len(history_check) > 1 and "#cheesepoop9870" in history_channel) or ("+h" in line2 and len(line2) > 1) or chanserv_halfop:
                     history_bypass = 1
-                    if ":ChanServ!ChanServ@conflict.irc.scpwiki.com MODE" in line and "+h :Mando-Bot" in line:
+                    if chanserv_halfop:
                         log.info("History bypass enabled by ChanServ halfop grant")
+                        log.info(f"ChanServ line: {line}")
                     else:
                         handle.write('PRIVMSG #cheesepoop9870 :History cleared!\r\n')
                         handle.flush()
