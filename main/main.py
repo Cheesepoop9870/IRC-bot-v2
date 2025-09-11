@@ -396,6 +396,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             log.info(f'Reboot command used by {sender} in channel {channel_debug}')
             os.system("python3 main/main.py")
             log.info("Rebooted")
+            
             os.system('cls' if os.name == 'nt' else 'clear')
             sys.exit(0)
         else:
@@ -569,7 +570,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         log.info("Generating user key")
         user_key = pastebin2.generate_user_key(pastebin2.api_dev_key, pastebin2.username, pastebin2.password)
         log.info(f"User key generated: {user_key}")
-        result = pastebin2.upload_paste(pastebin2.api_dev_key, user_key, content.strip(), "test", "text", 0, "1D")
+        result = pastebin2.upload_paste(pastebin2.api_dev_key, user_key, content.strip(), "Mando Logs", "text", 0, "1D")
         log.info("Uploaded logs to pastebin")
         log.info(f"Upload result: {result}")
         send_message(channel_debug, f'{sender}: Logs: {result}')
@@ -582,7 +583,19 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the setup command in channel {channel_debug}')
-
+    elif command == "cycle" or command == "rejoin":
+        if checkperms(full_host, sender):
+            log.info("Cycling channels")
+            for x in channel_list:
+                handle.write(f'PART {x}\r\n')
+                handle.flush()
+                log.info(f"Left {x}")
+                handle.write(f'JOIN {x}\r\n')
+                handle.flush()
+                log.info(f"Joined {x}")
+                send_message(channel_debug, f'{sender}: Cycled channels')
+                log.info(f'{sender} cycled channels')
+        
 ##################################################################################
 ##################################################################################
 
@@ -657,9 +670,10 @@ if __name__ == "__main__":
             chanserv_halfop = (":ChanServ!ChanServ@conflict.irc.scpwiki.com" in line and 
                              "MODE" in line and 
                              "+h" in line and 
-                             "Mando-Bot" in line)
+                             nick in line and
+                              "#site22" in line)
             
-            if (len(history_check) > 1 and "#cheesepoop9870" in history_channel) or ("+h" in line2 and len(line2) > 1) or chanserv_halfop:
+            if chanserv_halfop and history_bypass == 0:
                 history_bypass = 1
                 if chanserv_halfop:
                     log.info("History bypass enabled by ChanServ halfop grant")
@@ -700,6 +714,7 @@ if __name__ == "__main__":
     finally:
         try:
             sys.exit(1)
+            
         except Exception as e:
             log.critical(f"Error: sys.exit(1) failed: {e}")
             pass
