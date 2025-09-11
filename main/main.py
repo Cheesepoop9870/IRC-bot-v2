@@ -586,16 +586,34 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     elif command == "cycle" or command == "rejoin":
         if checkperms(full_host, sender):
             log.info("Cycling channels")
-            for x in channel_list:
-                handle.write(f'PART {x}\r\n')
+            if len(args[0]) == 0:
+                handle.write(f"PART {channel_debug} :Cycling\r\n")
                 handle.flush()
-                log.info(f"Left {x}")
-                handle.write(f'JOIN {x}\r\n')
+                log.info(f"Left {channel_debug}")
+                handle.write(f"JOIN {channel_debug}\r\n")
                 handle.flush()
-                log.info(f"Joined {x}")
-                send_message(channel_debug, f'{sender}: Cycled channels')
-                log.info(f'{sender} cycled channels')
-        
+                log.info(f"Joined {channel_debug}")
+                send_message(channel_debug, f'{sender}: Cycled {channel_debug}')
+                log.info(f'{sender} cycled {channel_debug}')
+            elif args[0] == "all":
+                for x in channel_list:
+                    handle.write(f'PART {x} :Cycling\r\n')
+                    handle.flush()
+                    log.info(f"Left {x}")
+                    handle.write(f'JOIN {x}\r\n')
+                    handle.flush()
+                    log.info(f"Joined {x}")
+                    send_message(channel_debug, f'{sender}: Cycled channels')
+                    log.info(f'{sender} cycled channels')
+            else:
+                handle.write(f'PART {args[0]} :Cycling\r\n')
+                handle.flush()
+                log.info(f"Left {args[0]}")
+                handle.write(f'JOIN {args[0]}\r\n')
+                handle.flush()
+                log.info(f"Joined {args[0]}")
+                send_message(channel_debug, f'{sender}: Cycled {args[0]}')
+                log.info(f'{sender} cycled {args[0]}')
 ##################################################################################
 ##################################################################################
 
