@@ -41,8 +41,8 @@ channel_list = ["#cheesepoop9870", "#facility36", "#neutralzone", "#site22", "#M
 reg_channel_list = []
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes", "Magnileak", } # Add admin usernames/hosts here
-ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|theword987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$"}
-debug_flag = 0 # 0 = off, 1 = on | SHOULD BEl 0 WHEN NOT IN DEBUG MODE
+ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|thewXord987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
+debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
 
 
@@ -753,7 +753,7 @@ if __name__ == "__main__":
 
             # Check for PRIVMSG (chat messages) - AFTER history bypass check
             log.debug(f"Received message: {line}")
-            if "PRIVMSG" in line and (':!' in line or ":." in line):
+            if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
                 sender = line.split('!')[0][1:]
                 # Extract the full host (nick!user@host)
