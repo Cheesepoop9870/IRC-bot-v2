@@ -13,8 +13,8 @@ url = "https://api.crom.avn.sh" #backup api https://hoppscotch.io/graphql |https
 # Simple in-memory cache
 _cache = {}
 CACHE_DURATION = 60  # Cache duration in seconds
-_cache_thread = None
-_cache_running = False
+# _cache_thread = None
+# _cache_running = False
 # code = 0
 
 
