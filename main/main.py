@@ -41,8 +41,8 @@ channel_list = ["#cheesepoop9870", "#facility36", "#neutralzone", "#site22", "#M
 reg_channel_list = []
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes", "Magnileak", } # Add admin usernames/hosts here
-ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|theword987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$"}
-debug_flag = 0 # 0 = off, 1 = on | SHOULD BEl 0 WHEN NOT IN DEBUG MODE
+ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|thewXord987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
+debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
 
 
@@ -391,7 +391,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     elif command == "reboot" or command == "!reboot":
 
         if checkperms(full_host, sender):
-            handle.write("QUIT :Rebooting\r\n")
+            handle.write(f"QUIT :Rebooting ({channel_debug})\r\n")
             handle.flush()
             log.info(f'Reboot command used by {sender} in channel {channel_debug}')
             os.system("python3 main/main.py")
@@ -579,7 +579,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         if checkperms(full_host, sender):
             log.info("stopping cache")
             crom.stop_background_cache()
-            send_message(channel_debug, f"{sender}: Automatic Cache stopped (reboot with !l)")
+            send_message(channel_debug, f"{sender}: Automatic Cache stopped (reload with !l)")
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the setup command in channel {channel_debug}')
@@ -614,6 +614,56 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 log.info(f"Joined {args[0]}")
                 send_message(channel_debug, f'{sender}: Cycled {args[0]}')
                 log.info(f'{sender} cycled {args[0]}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the cycle command in channel {channel_debug}')
+    elif command == "!kick":
+        if checkperms(full_host, sender):
+            try:
+                args[1] = " ".join(args[1:])
+            except IndexError:
+                args.append("")
+                log.exception("IndexError in kick command")
+            if len(args[0]) == 0:
+                send_message(channel_debug, f'{sender}: Invalid format. Use !kick <nick> <?reason>')
+            elif len(args[1]) == 0:
+                handle.write(f'KICK {channel_debug} {args[0]} :Kicked by {sender}\r\n')
+                if "482" in handle.readline().strip():
+                    rand = r.randint(0,10)
+                    if rand == 0:
+                        send_message(channel_debug, f'{sender}: i cant kick them ;-;')
+                    else:
+                        send_message(channel_debug, f'{sender}: I am not authorizd to kick {args[0]}.')
+                    log.warning(f'{sender} tried to kick {args[0]} from {channel_debug} but is not authorized')
+                else:
+                    log.info(f'{sender} kicked {args[0]} from {channel_debug}')
+                
+            else:
+                handle.write(f'KICK {channel_debug} {args[0]} :{args[1]}\r\n')
+                handle.flush()
+                log.info(f'{sender} kicked {args[0]} from {channel_debug} for {args[1]}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the kick command in channel {channel_debug}')
+    elif command == "!ban":
+        if checkperms(full_host, sender):
+            #format !ban <nick> <duration> <?reason>
+            args[1] = " ".join(args[1:])
+            if len(args[0]) == 0:
+                send_message(channel_debug, f'{sender}: Invalid format. Use !ban <nick> <?reason>')
+            elif len(args[1]) == 0:
+                handle.write(f'MODE {channel_debug} +b {args[0]} :Banned by {sender}\r\n')
+                handle.flush()
+                log.info(f'{sender} banned {args[0]} from {channel_debug}')
+            else:
+                handle.write(f'MODE {channel_debug} +b {args[0]} :{args[1]}\r\n')
+                handle.flush()
+                log.info(f'{sender} banned {args[0]} from {channel_debug} for {args[1]}')
+                # add duration later
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the ban command in channel {channel_debug}')
+    
 ##################################################################################
 ##################################################################################
 
