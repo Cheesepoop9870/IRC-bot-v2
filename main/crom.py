@@ -285,7 +285,29 @@ query Search($query: String!) {
   }
 }
 """
-
+def get_json_serach(query):
+    variables2 = {
+      'query': f'{query}',
+      'noAttributions': False
+    }
+    response = requests.post(url=url, json={"query": body, "variables": variables2})
+    if response.status_code == 200:
+        output = response.content.decode('utf-8')
+        output2 = json.loads(output)
+        return output2
+    else:
+        return f"Error HTTP {response.status_code}"
+def get_json_author(query):
+    variables2 = {
+      'query': f'{query}',  # term
+    }
+    response = requests.post(url=url, json={"query": aubody, "variables": variables2})
+    if response.status_code == 200:
+        output = response.content.decode('utf-8')
+        output2 = json.loads(output)
+        return output2
+    else:
+        return f"Error HTTP {response.status_code}"
 def rating(query):
     variables2 = {
       'query': f'{query}',  # term
@@ -337,7 +359,7 @@ def wikisearch(query):
       }
       return dict(output4)
     else: 
-      return f"Error {response.status_code}"
+      return f"Error HTTP {response.status_code}"
 
 
 def ausearch(query):

@@ -10,6 +10,7 @@ import base64
 import json
 import logging as log
 import pastebin2
+import gc
 from local_googlesearch_python import search
 from youtube_search import YoutubeSearch as ytsearch 
 
@@ -42,8 +43,10 @@ reg_channel_list = []
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes", "Magnileak", } # Add admin usernames/hosts here
 ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|thewXord987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
-debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
+debug_flag = 1 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
+
+disable_google = 1 # 0 = google works, 1 = google is disabled
 
 
 def handle_command(command, args, handle, sender, channel_debug, full_host=None):
@@ -218,71 +221,83 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.     Action logged.')
             log.warning(f'{sender} tried to use the leave command in channel {channel_debug}')
     elif command == "google" or command == "g":
-        #note: ADD SPACE BETWEEN URL AND TITLE
-        debug(-1, list(search(args, num_results=2)))
-        debug(-1.5, bool(list(search(args, num_results=1))[0]))
-        debug(0, bool(list(search(args, num_results=1))[0]))
-        if not bool(list(search(args, num_results=1))[0]) or "/search?" in str(list(search(args, num_results=1))[0]): # false, 1st result contains no results/404
-            output = list(search(args, num_results=2, advanced=True))
-            debug(1, output)
-            output = str(output[1]).split("(", 1)
-            debug(2, output)
-            output.pop(0) # Remove the first element
-            debug(3, output)
-            output2 = str(output[0]).split("title=")
-            debug(4, output2)
-            output2.pop(0) # Remove the first element
-            debug(5, output2)
-            output = output2
-            debug(6, output)
-            output_str = "".join(output)
-            debug(7, output_str)
-            output2 = output_str.split("title")
-            debug(8, output2)
-            output_str = " | ".join(output)
-            debug(9, output_str)
-            output_str = output_str[0:len(output_str)-2]
-            #404 check
-            if ", title | , description |" in output_str or "/search?" in output_str:
-              send_message(channel_debug, f'{sender}: No results found!')
-              log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got no results')
-            else:
-              send_message(channel_debug, f'{sender}: {output_str}')
-        elif bool(list(search(args, num_results=1))[0]): # true, first result contains a 404 or error
-            log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got a 404 or error on first result')
+        global disable_google
+        if disable_google == 1:
+            send_message(channel_debug, f'{sender}: Google is disabled. Tell cheese if you think this is a mistake.')
+            log.warning(f'{sender} tried to use the google command in channel {channel_debug} but google is disabled')
+            return
+        else:
             try:
-                output = list(search(args, num_results=1, advanced=True))
-                debug(1, output)
-                output = str(output[0]).split("(", 1)
-                debug(2, output)
-                output.pop(0) # Remove the first element
-                debug(3, output)
-                output = re.split(r"url=|title=|description=" ,str(output[0]))
-                debug(4, output)
-                output.pop(0) # Remove the first element
-                debug(5, output)
-                output2 = output[0].split(",")
-                debug(6, output2)
-                output2.pop(1) # Remove the second element
-                debug(7, output2)
-                output.pop(0) #Replace the first element
-                debug(8, output)
-                output.insert(0, output2[0]) #^
-                debug(9, output)
-                output_str = " | ".join(output)
-                debug(10, output_str)
-                output = output_str.split(",")
-                #do same thing as above
-                if ", title | , description |" in output_str or "/search?" in output_str:
-                  send_message(channel_debug, f'{sender}: Error!')
+                #note: ADD SPACE BETWEEN URL AND TITLE
+                debug(-4, " ".join(args))
+                debug(-3, list(search("hi", num_results=2)))
+                debug(-2, search(" ".join(args), num_results=1))
+                debug(-1, list(search(" ".join(args), num_results=2)))
+                debug(-1.5, bool(list(search(" ".join(args), num_results=1))[0]))
+                debug(0, bool(list(search(" ".join(args), num_results=1))[0]))
+                if not bool(list(search(" ".join(args), num_results=1))[0]) or "/search?" in str(list(search(args, num_results=1))[0]): # false, 1st result contains no results/404
+                    output = list(search(" ".join(args), num_results=2, advanced=True))
+                    debug(1, output)
+                    output = str(output[1]).split("(", 1)
+                    debug(2, output)
+                    output.pop(0) # Remove the first element
+                    debug(3, output)
+                    output2 = str(output[0]).split("title=")
+                    debug(4, output2)
+                    output2.pop(0) # Remove the first element
+                    debug(5, output2)
+                    output = output2
+                    debug(6, output)
+                    output_str = "".join(output)
+                    debug(7, output_str)
+                    output2 = output_str.split("title")
+                    debug(8, output2)
+                    output_str = " | ".join(output)
+                    debug(9, output_str)
+                    output_str = output_str[0:len(output_str)-2]
+                    #404 check
+                    if ", title | , description |" in output_str or "/search?" in output_str:
+                      send_message(channel_debug, f'{sender}: No results found!')
+                      log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got no results')
+                    else:
+                      send_message(channel_debug, f'{sender}: {output_str}')
+                elif bool(list(search(" ".join(args), num_results=1))[0]): # true, first result contains a 404 or error
+                    log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got a 404 or error on first result')
+                    try:
+                        output = list(search(" ".join(args), num_results=1, advanced=True))
+                        debug(1, output)
+                        output = str(output[0]).split("(", 1)
+                        debug(2, output)
+                        output.pop(0) # Remove the first element
+                        debug(3, output)
+                        output = re.split(r"url=|title=|description=" ,str(output[0]))
+                        debug(4, output)
+                        output.pop(0) # Remove the first element
+                        debug(5, output)
+                        output2 = output[0].split(",")
+                        debug(6, output2)
+                        output2.pop(1) # Remove the second element
+                        debug(7, output2)
+                        output.pop(0) #Replace the first element
+                        debug(8, output)
+                        output.insert(0, output2[0]) #^
+                        debug(9, output)
+                        output_str = " | ".join(output)
+                        debug(10, output_str)
+                        output = output_str.split(",")
+                        #do same thing as above
+                        if ", title | , description |" in output_str or "/search?" in output_str:
+                          send_message(channel_debug, f'{sender}: Error!')
+                        else:
+                          send_message(channel_debug, f"{sender}: {output_str[0:len(output_str)-2]}")
+                    except Exception as e:
+                        send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
+                        log.exception(f"Error: {e}")
                 else:
-                  send_message(channel_debug, f"{sender}: {output_str[0:len(output_str)-2]}")
+                    send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
+                    log.error("Error! google command failed")
             except Exception as e:
                 send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
-                log.exception(f"Error: {e}")
-        else:
-            send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
-            log.error("Error! google command failed")
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
@@ -332,6 +347,13 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
                     log.warning(f'{sender} tried to use the cache command in channel {channel_debug}')
+            elif args[1] == "google":
+                if checkperms(full_host, sender):
+                    disable_google = disable_google + 1
+                    if disable_google > 1:
+                        disable_google = 0
+                    send_message(channel_debug, f'Google disabled = {disable_google}')
+                    log.info(f'Google disabled set to {disable_google} by {sender} in channel {channel_debug}')
         elif args[0] == "get":
             if args[1] == "debug":
                 send_message(channel_debug, f'Debug mode = {debug_flag}')
@@ -663,6 +685,33 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the ban command in channel {channel_debug}')
+    elif command == "ramclear":
+        if checkperms(full_host, sender):
+            gc.collect()
+            send_message(channel_debug, f'{sender}: RAM cleared')
+            log.info(f'{sender} cleared RAM in channel {channel_debug}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the ramclear command in channel {channel_debug}')
+    elif command == "!cromcheck_search":
+        if checkperms(full_host, sender):
+            output = crom.get_json_serach(" ".join(args))
+            send_message(channel_debug, f'{sender}: {output}')
+            log.info(f'{sender} used the cromcheck_search command in channel {channel_debug}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the cromcheck_search command in channel {channel_debug}')
+    elif command == "!cromcheck_author":
+        if checkperms(full_host, sender):
+            output = crom.get_json_author(" ".join(args))
+            send_message(channel_debug, f'{sender}: {output}')
+            log.info(f'{sender} used the cromcheck_author command in channel {channel_debug}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the cromcheck_author command in channel {channel_debug}')
+
+            
+            
     
 ##################################################################################
 ##################################################################################
@@ -781,9 +830,9 @@ if __name__ == "__main__":
         # break
     finally:
         try:
-            sys.exit(1)
+            sys.exit()
             
         except Exception as e:
-            log.critical(f"Error: sys.exit(1) failed: {e}")
+            log.critical(f"Error: sys.exit() failed: {e}")
             pass
 # HIDE PASSWORD

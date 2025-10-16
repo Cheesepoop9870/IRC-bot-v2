@@ -15,7 +15,7 @@ run = ["sh", "-c", "python3 main/main.py"]
 deploymentTarget = "cloudrun"
 
 [workflows]
-runButton = "Run Bot"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "crom"
@@ -42,7 +42,7 @@ author = 30770619
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 db.py"
+args = "python3 main/db.py"
 
 [[workflows.workflow]]
 name = "test"
@@ -51,7 +51,7 @@ author = 30770619
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 test.py"
+args = "python3 main/test.py"
 
 [[workflows.workflow]]
 name = "log"
@@ -79,6 +79,26 @@ author = 30770619
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 main/main.py"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "IRC Bot"
+
+[[workflows.workflow]]
+name = "IRC Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd main && python main.py"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 expertMode = true

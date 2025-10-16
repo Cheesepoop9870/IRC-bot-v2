@@ -3,7 +3,13 @@ import logging as log
 from contextlib import contextmanager
 from typing import List, Optional, Tuple, Any
 import os
-
+log.basicConfig(
+    level=log.INFO,  
+    format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
+    filename='app.log',  # Log to a file named 'app.log'
+    filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
+    datefmt='%H:%M:%S',
+)
 class DatabaseManager:
     """A functional database manager for SQLite operations"""
 
