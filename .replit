@@ -24,7 +24,7 @@ author = 30770619
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 crom.py"
+args = "python3 main/crom.py"
 
 [[workflows.workflow]]
 name = "crom3"
