@@ -1,32 +1,30 @@
-# from googlesearch import search
-# print(list(search("Google", advanced=True)))
-import logging
+import crom
+authors = []
 
-# 1. Define the custom level
-logging.VERBOSE = 15
+output = crom.wikisearch("SCP-6500")
+print(output["url"])
+print(output["title"])
+print(output["title2"][0]["title"])
+print(output["rating"])
+print(output["createdAt"])
+print(output["comments"])
+print(output["authors"])
+print("")
 
-# 2. Associate the name with the level
-logging.addLevelName(logging.VERBOSE, "VERBOSE")
+for x in range(0, len(output["authors"])): #cycles through authors
+    print(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #prints current author(s)
+    authors.append(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #adds to list
+print("")
+print(output["authors2"])
+print("")
 
-# 3. Add a convenience method (optional)
-def verbose(self, message, *args, **kwargs):
-    if self.isEnabledFor(logging.VERBOSE):
-        self._log(logging.VERBOSE, message, args, **kwargs)
-
-logging.Logger.verbose = verbose
-
-# Configure basic logging
-logging.basicConfig(
-  level=logging.DEBUG,  
-  format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
-  filename='test.log',  # Log to a file named 'app.log'
-  filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
-  datefmt='%H:%M:%S',
-)
-# Get a logger instance
-logger = logging.getLogger(__name__)
-
-# Use the custom level
-logger.debug("This is a DEBUG message.")
-logger.verbose("This is a VERBOSE message.")
-logger.info("This is an INFO message.")
+if authors:
+  print(authors)
+else: #attmeta fail 
+  authors = []
+  for x in range(0, len(output["authors2"])): #uses backup list
+    print(dict(output["authors2"][x])["user"]["name"])
+    authors.append(dict(output["authors2"][x])["user"]["name"])
+    
+  print("")  
+  print(authors)

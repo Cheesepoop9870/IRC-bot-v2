@@ -32,7 +32,7 @@ def verbose(self, message, *args, **kwargs):
 log.Logger.verbose = verbose
 #logging stuff
 log.basicConfig(
-    level=log.DEBUG,  
+    level=log.INFO,  
     format='[%(asctime)s,%(msecs)d] [%(levelname)s]: %(message)s',
     filename='app.log',  # Log to a file named 'app.log'
     filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
@@ -54,7 +54,7 @@ reg_channel_list = []
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes", "Magnileak", } # Add admin usernames/hosts here
 ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|thewXord987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
-debug_flag = 1 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
+debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
 
 disable_google = 1 # 0 = google works, 1 = google is disabled
@@ -234,7 +234,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     elif command == "google" or command == "g":
         global disable_google
         if disable_google == 1:
-            send_message(channel_debug, f'{sender}: Google is disabled. Tell cheese if you think this is a mistake.')
+            send_message(channel_debug, f'{sender}: Google is disabled. Tell cheese if you think this is a mistake. For more info see github.com/Cheesepoop9870/IRC-bot-v2/issues/24')
             log.warning(f'{sender} tried to use the google command in channel {channel_debug} but google is disabled')
             return
         else:
@@ -377,41 +377,33 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     elif command == "search" or command == "s":
         try:
             output = crom.wikisearch(" ".join(args))
-            output2 = ""
-            output3 = []
-            output4 = []
-            output4.append(output["rating"].split("(")[0])
-            output4.append(output["rating"].split("(")[1][0:len(output["rating"].split("(")[1])-1])
-            output4.append(output4[1].split("/")[0].strip("+"))
-            output4.append(output4[1].split("/")[1].strip("-"))
-            output4.append(int(output4[2]) + int(output4[3]))
-            output4.append(int(output4[2])/int(output4[4]))
-            output4.append("")
-            output4[5] = f"{output4[5]:.2%}"
-            output4.pop(6)
             debug(0, output)
-            debug(1, output4)
-            debug(2, output4[5])
+            authors = []
+            for x in range(0, len(output["authors"])): #cycles through authors
+                
+                authors.append(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #adds to list
+                debug(f"1|{x}", authors)
+            debug(1.5, authors)
+            if authors:
+                pass
 
-            #note: errors wont cause a poblem
+            else: #attmeta fail 
+              authors = []
+              for x in range(0, len(output["authors2"])): #uses backup list
+                authors.append(dict(output["authors2"][x])["user"]["name"])
+                debug(f"2|{x}", authors)
             if output["title2"] == []: #no alt title
-                output["title2"] = ""
-                output["title"] = f"{output['title']},"
-            else:
-                output["title"] = f"{output['title']}:"
-                output_str = dict(output["title2"][0])["title"]
-                output_str = f"{output_str},"
-            for x in range(0, len(output["authors"])):
-                output3.append(dict(output["authors"][x])["user"]["name"])
-            send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+                send_message(channel_debug, f'{sender}: {output["title"]}: ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
+                
+            else:    
+                send_message(channel_debug, f'{sender}: {output["title"]}: {output["title2"][0]["title"]} ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
             log.warning(f'{sender} tried to use the search command in channel {channel_debug} but got no results')
             return
         except Exception as e:
-            send_message(channel_debug, f'{sender}: Error! String: {e}')
             log.exception(f"Error: {e}")
-
+            send_message(channel_debug, f'{sender}: Error: {e}')
     elif command == "raw":
 
         if checkperms(full_host, sender):

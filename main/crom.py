@@ -246,6 +246,7 @@ query Search($query: String!, $noAttributions: Boolean!) {
         name
       }
       date
+      isCurrent
     }
   }
 }
@@ -388,6 +389,7 @@ def addplus(arg):
 
 
 def wikisearch(query):
+    autemp = []
     variables2 = {
       'query': f'{query}',  # term
       'noAttributions': False
@@ -414,8 +416,14 @@ def wikisearch(query):
         "rating": f"{addplus(output3[3])} (+{int((output3[3] + output3[4])/2)}/-{abs(int((output3[3] - output3[4])/2))})", #full rating (+upvotes/-downvotes)
         "createdAt": " ".join(output3[5].split("T"))[0:len(" ".join(output3[5].split("T")))-2],
         "comments": output3[6],
-        "authors": output3[7]
+        "authors": output3[7],
+        "authors2": output3[7],
       }
+      
+      for x in output4["authors"]:
+        if x["isCurrent"]:
+          autemp.append(x)
+      output4["authors"] = autemp    
       return dict(output4)
     else: 
       return f"Error HTTP {response.status_code}"
@@ -761,13 +769,17 @@ def check_wikidot():
   code = requests.get("https://scp-wiki.wikidot.com").status_code
   return code
 
+
+
+autemp = []
 if __name__ == "__main__":
-  output = random_page()
+  output = wikisearch("SCP-006")
   print(type(output))
+  print(output)
+  print("")
   print(output["authors"])
   print("")
-  for x in output["authors"]:
-    print(x)
+  
   
 
 
