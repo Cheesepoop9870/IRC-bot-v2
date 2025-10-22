@@ -13,8 +13,8 @@ url = "https://api.crom.avn.sh" #backup api https://hoppscotch.io/graphql |https
 # Simple in-memory cache
 _cache = {}
 CACHE_DURATION = 60  # Cache duration in seconds
-# _cache_thread = None
-# _cache_running = False
+_cache_thread = None
+_cache_running = False
 # code = 0
 
 
@@ -246,6 +246,7 @@ query Search($query: String!, $noAttributions: Boolean!) {
         name
       }
       date
+      isCurrent
     }
   }
 }
@@ -276,6 +277,53 @@ query Search($query: String!, $noAttributions: Boolean!) {
 }
 """
 
+random_body = """
+query Random($noAttributions: Boolean!) {
+  randomPage(filter: {anyBaseUrl: "http://scp-wiki.wikidot.com", noneTags: "guide component component-backend fragment archived news deletion-range" }) {
+    page {
+      url
+      wikidotInfo {
+        title
+        rating
+        voteCount
+        commentCount
+        createdAt
+        createdBy{
+          name
+        }
+        tags
+      }
+      alternateTitles{
+        
+        title
+      }
+      attributions @skip(if: $noAttributions){
+        type
+        user {
+          name
+        }
+        date
+        isCurrent
+      }
+      
+    }
+  }
+}
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 rating_body = """
 query Search($query: String!) {
   searchPages(query: $query, filter: {anyBaseUrl: "http://scp-wiki.wikidot.com"}) {
@@ -285,6 +333,38 @@ query Search($query: String!) {
   }
 }
 """
+
+
+def get_json_serach(query):
+    variables2 = {
+      'query': f'{query}',
+      'noAttributions': False,
+    }
+    response = requests.post(url=url, json={"query": body, "variables": variables2})
+  
+    if response.status_code == 200:
+        output = response.content.decode('utf-8')
+        output2 = json.loads(output)
+        return output2
+    else:
+        return f"Error HTTP {response.status_code}"
+
+
+
+def get_json_author(query):
+    variables2 = {
+      'query': f'{query}',  # term
+    }
+    response = requests.post(url=url, json={"query": aubody, "variables": variables2})
+
+  
+    if response.status_code == 200:
+        output = response.content.decode('utf-8')
+        output2 = json.loads(output)
+        return output2
+    else:
+        return f"Error HTTP {response.status_code}"
+
 
 def rating(query):
     variables2 = {
@@ -299,6 +379,8 @@ def rating(query):
     else:
         return f"Error {response.status_code}"
 
+
+
 def addplus(arg):
     if arg > 0:
         return f"+{arg}"
@@ -307,6 +389,7 @@ def addplus(arg):
 
 
 def wikisearch(query):
+    autemp = []
     variables2 = {
       'query': f'{query}',  # term
       'noAttributions': False
@@ -333,11 +416,17 @@ def wikisearch(query):
         "rating": f"{addplus(output3[3])} (+{int((output3[3] + output3[4])/2)}/-{abs(int((output3[3] - output3[4])/2))})", #full rating (+upvotes/-downvotes)
         "createdAt": " ".join(output3[5].split("T"))[0:len(" ".join(output3[5].split("T")))-2],
         "comments": output3[6],
-        "authors": output3[7]
+        "authors": output3[7],
+        "authors2": output3[7],
       }
+      
+      for x in output4["authors"]:
+        if x["isCurrent"]:
+          autemp.append(x)
+      output4["authors"] = autemp    
       return dict(output4)
     else: 
-      return f"Error {response.status_code}"
+      return f"Error HTTP {response.status_code}"
 
 
 def ausearch(query):
@@ -636,6 +725,41 @@ def br_wikisearch(query):
     else: 
       return f"Error {response.status_code}"
 
+def random_page():
+    variables2 = {
+      'noAttributions': False
+    }
+    response = requests.post(url=url, json={"query": random_body, "variables": variables2})
+    if response.status_code == 200:
+      output = response.content.decode('utf-8')
+      output2 = json.loads(output)
+      # return output2
+      output3 = []
+      output4 = {}
+      output3.append(output2["data"]["randomPage"]["page"]["url"]) 
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["title"])
+      output3.append(output2["data"]["randomPage"]["page"]["alternateTitles"])
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["rating"])
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["voteCount"])
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["createdAt"])
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["commentCount"])
+      output3.append(output2["data"]["randomPage"]["page"]["attributions"])
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["tags"])
+      output3.append(output2["data"]["randomPage"]["page"]["wikidotInfo"]["createdBy"]["name"])
+      #url, title, title2, rating, total votes, created at, total comments, authors, tags, created by
+      output4 = {
+        "url": output3[0],
+        "title": output3[1],
+        "title2": output3[2] if not output3[2] else "",
+        "rating": f"{addplus(output3[3])} (+{int((output3[3] + output3[4])/2)}/-{abs(int((output3[3] - output3[4])/2))})", #full rating (+upvotes/-downvotes)
+        "createdAt": " ".join(output3[5].split("T"))[0:len(" ".join(output3[5].split("T")))-2],
+        "comments": output3[6],
+        "authors": output3[7],
+        "tags": output3[8],
+        "createdBy": output3[9]
+      }
+      return output4
+
 
 def cache_set(time):
     global CACHE_DURATION
@@ -645,10 +769,18 @@ def check_wikidot():
   code = requests.get("https://scp-wiki.wikidot.com").status_code
   return code
 
+
+
+autemp = []
 if __name__ == "__main__":
-  output = wikisearch("4566")
+  output = wikisearch("SCP-006")
   print(type(output))
   print(output)
+  print("")
+  print(output["authors"])
+  print("")
+  
+  
 
 
   
