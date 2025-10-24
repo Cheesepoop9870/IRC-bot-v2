@@ -768,38 +768,11 @@ def cache_set(time):
 def check_wikidot():
   code = requests.get("https://scp-wiki.wikidot.com").status_code
   return code
-# def send_message(channel, message):
-#   print(message)
-# def debug(var, args):
-#   print(f"{var} {args}")
-# channel_debug = ""
-# sender = ""
-# autemp = []
+
+
 if __name__ == "__main__":
   print("guh")
-    # output = random_page()
-    # print(type(output))
-    # print(output)
-    # print("")
-    # authors = []
-    # for x in range(0, len(output["authors"])): #cycles through authors
-
-    #     authors.append(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #adds to list
-    #     debug(f"1|{x}", authors)
-    # debug(1.5, authors)
-    # if authors:
-    #     pass
-
-    # else: #attmeta fail 
-    #   authors = []
-    #   for x in range(0, len(output["authors2"])): #uses backup list
-    #     authors.append(dict(output["authors2"][x])["user"]["name"])
-    #     debug(f"2|{x}", authors)
-    # if output["title2"] == []: #no alt title
-    #     send_message(channel_debug, f'{sender}: {output["title"]}: ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
-
-    # else:    
-    #     send_message(channel_debug, f'{sender}: {output["title"]}: {output["title2"][0]["title"]} ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
+    
   
   
 
