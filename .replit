@@ -3,6 +3,7 @@ modules = ["nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["playwright"]
 
 [unitTest]
 language = "python3"
@@ -99,6 +100,15 @@ args = "cd main && python main.py"
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "test2"
+mode = "parallel"
+author = 30770619
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 main/test2.py"
 
 [agent]
 expertMode = true

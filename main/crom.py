@@ -15,6 +15,7 @@ _cache = {}
 CACHE_DURATION = 60  # Cache duration in seconds
 _cache_thread = None
 _cache_running = False
+do_cache = True
 # code = 0
 
 
@@ -102,7 +103,7 @@ def _background_cache_refresh():
 def start_background_cache():
     """Start the background cache refresh thread"""
     global _cache_thread, _cache_running
-    if not _cache_running:
+    if (not _cache_running) and do_cache:
         _cache_running = True
         _cache_thread = threading.Thread(target=_background_cache_refresh, daemon=True)
         _cache_thread.start()

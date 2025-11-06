@@ -56,8 +56,7 @@ ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", 
 ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|theword987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
-
-disable_google = 1 # 0 = google works, 1 = google is disabled
+google_type = 1 # 0 = google serach through googlesearch-python, 1 = google is disabled, 2 = google search through SearchAI
 
 
 def handle_command(command, args, handle, sender, channel_debug, full_host=None):
@@ -232,8 +231,8 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.     Action logged.')
             log.warning(f'{sender} tried to use the leave command in channel {channel_debug}')
     elif command == "google" or command == "g":
-        global disable_google
-        if disable_google == 1:
+        global google_type
+        if google_type == 1:
             send_message(channel_debug, f'{sender}: Google is disabled. Tell cheese if you think this is a mistake. For more info see github.com/Cheesepoop9870/IRC-bot-v2/issues/24')
             log.warning(f'{sender} tried to use the google command in channel {channel_debug} but google is disabled')
             return
@@ -361,11 +360,10 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             elif args[1] == "google":
                 if checkperms(full_host, sender):
                     
-                    disable_google = disable_google + 1
-                    if disable_google > 1:
-                        disable_google = 0
-                    send_message(channel_debug, f'Google disabled = {disable_google}')
-                    log.info(f'Google disabled set to {disable_google} by {sender} in channel {channel_debug}')
+                    google_type = int(args[2])
+                    
+                    send_message(channel_debug, f'Google type = {google_type}')
+                    log.info(f'Google type set to {google_type} by {sender} in channel {channel_debug}')
         elif args[0] == "get":
             if args[1] == "debug":
                 send_message(channel_debug, f'Debug mode = {debug_flag}')
