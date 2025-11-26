@@ -1,4 +1,5 @@
 import random as r
+import requests
 import re
 import socket
 import ssl
@@ -13,7 +14,7 @@ import pastebin2
 import gc
 from local_googlesearch_python import search
 from youtube_search import YoutubeSearch as ytsearch 
-
+from search_ai import search as searchai
 # from pastebin import PastebinAPI
 #for infinite rolls
 #remove this maybe
@@ -53,10 +54,11 @@ channel_list = ["#cheesepoop9870", "#facility36", "#neutralzone", "#site22", "#M
 reg_channel_list = []
 # List of admin usernames who can use privileged commands
 ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", "The_Fox_Empress", "Felds", "PineappleOnSleepza", "my.poop.is.cheese", "illegal.food.combo", " stalking.your.sandbox", "site19.isnt.real.cant.hurt.you", "the.queen.of.foxes", "Magnileak", } # Add admin usernames/hosts here
-ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|theword987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
+ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|thewXord987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
-google_type = 1 # 0 = google serach through googlesearch-python, 1 = google is disabled, 2 = google search through SearchAI
+
+disable_google = 1 # 0 = google works, 1 = google is disabled
 
 
 def handle_command(command, args, handle, sender, channel_debug, full_host=None):
@@ -231,12 +233,12 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.     Action logged.')
             log.warning(f'{sender} tried to use the leave command in channel {channel_debug}')
     elif command == "google" or command == "g":
-        global google_type
-        if google_type == 1:
+        global disable_google
+        if disable_google == 1:
             send_message(channel_debug, f'{sender}: Google is disabled. Tell cheese if you think this is a mistake. For more info see github.com/Cheesepoop9870/IRC-bot-v2/issues/24')
             log.warning(f'{sender} tried to use the google command in channel {channel_debug} but google is disabled')
             return
-        else:
+        elif disable_google == 0:
             try:
                 #note: ADD SPACE BETWEEN URL AND TITLE
                 debug(-4, " ".join(args))
@@ -308,6 +310,10 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                     log.error("Error! google command failed")
             except Exception as e:
                 send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
+                log.exception(f"Error: {e}")
+        elif disable_google == 2:
+            output = searchai(" ".join(args))
+            send_message(channel_debug, f'{sender}: {output[0]}')
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
@@ -360,10 +366,11 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             elif args[1] == "google":
                 if checkperms(full_host, sender):
                     
-                    google_type = int(args[2])
-                    
-                    send_message(channel_debug, f'Google type = {google_type}')
-                    log.info(f'Google type set to {google_type} by {sender} in channel {channel_debug}')
+                    disable_google = int(args[2])
+                    if disable_google > 2:
+                        disable_google = 0
+                    send_message(channel_debug, f'Google disabled = {disable_google}')
+                    log.info(f'Google disabled set to {disable_google} by {sender} in channel {channel_debug}')
         elif args[0] == "get":
             if args[1] == "debug":
                 send_message(channel_debug, f'Debug mode = {debug_flag}')
@@ -562,25 +569,60 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         handle.flush()
         if "PONG" in handle.readline().strip():
             send_message(channel_debug, f'{sender}: confirmed connection with IRC server')
+            log.info(f'{sender} confirmed connection with IRC server')
         else:
             send_message(channel_debug, f'{sender}: connection with IRC server failed') 
             log.error(f'{sender} failed to connect to IRC server')
         # check crom
+        output = requests.get("https://api.crom.avn.sh")
         # ignore the error
         if crom.wikisearch("SCP-049")["title"] == "SCP-049":
-            send_message(channel_debug, f'{sender}: confirmed connection with Crom API')
+            send_message(channel_debug, f'{sender}: confirmed connection with Crom API ({output.status_code})')
+            log.info(f'{sender} confirmed connection with Crom API ({output.status_code})')
         else:
-            send_message(channel_debug, f'{sender}: connection with Crom API failed')
-            log.error(f'{sender} failed to connect to Crom API')
+            send_message(channel_debug, f'{sender}: connection with Crom API failed ({output.status_code})')
+            log.error(f'{sender} failed to connect to Crom API ({output.status_code})')
         #check wikidot
         output = crom.check_wikidot()
         if output == 200:
             send_message(channel_debug, f'{sender}: confirmed connection with Wikidot ({output})')
+            log.info(f'{sender} confirmed connection with Wikidot ({output})')
         else:
             send_message(channel_debug, f'{sender}: connection with Wikidot failed. Error code: {output}')
             log.error(f'{sender} failed to connect to Wikidot. Error code: {output}')
         output = ""
+        #check pastebin
+        output = requests.get("https://pastebin.com")
+        if output.status_code == 200:
+            send_message(channel_debug, f'{sender}: confirmed connection with Pastebin ({output.status_code})')
+            log.info(f'{sender} confirmed connection with Pastebin ({output.status_code})')
+        
+        else:
+            send_message(channel_debug, f'{sender}: connection with Pastebin failed ({output.status_code})')
+            log.error(f'{sender} failed to connect to Pastebin ({output.status_code})')
+            output = ""
+        #check replit
+        output = requests.get("https://replit.com")
+        if output.status_code == 200:
+            send_message(channel_debug, f'{sender}: confirmed connection with Replit ({output.status_code})')
+            log.info(f'{sender} confirmed connection with Replit ({output.status_code})')
+        else:
+            send_message(channel_debug, f'{sender}: connection with Replit failed ({output.status_code})')
+            log.error(f'{sender} failed to connect to Replit ({output.status_code})')
+            output = ""
+            #note, add google check
     elif command == "logs":
+        #chekc pastebin
+        output = requests.get("https://pastebin.com")
+        if output.status_code == 200:
+            log.info(f'{sender} confirmed connection with Pastebin ({output.status_code})')
+        else:
+            send_message(channel_debug, f'{sender}: connection with Pastebin failed({output.status_code})')
+            log.error(f'{sender} failed to connect to Pastebin ({output.status_code})')
+            output = ""
+            return
+        output = ""
+        # Read the log file
         with open("app.log", "r") as file:
             log.info("Reading logs")
             content = file.read()
