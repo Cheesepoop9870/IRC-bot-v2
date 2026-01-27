@@ -507,11 +507,11 @@ async def wikisearch_async(session: aiohttp.ClientSession, query: str) -> Dict[s
                     "authors": page_data["attributions"]
                 }
             else:
-                return None #its fine
+                return None #pyright: ignore #its fine
     except Exception as e:
         print(f"Error in async wikisearch: {e}")
         log.error(f"Error in async wikisearch: {e}")
-        return None #its fine
+        return None #pyright: ignore #its fine
 
 async def fetch_latest_parallel(article_names: List[str]) -> List[Dict[str, Any]]:
     """Fetch multiple articles in parallel"""
@@ -777,7 +777,7 @@ if __name__ == "__main__":
   print(type(output))
   print(output)
   print("")
-  print(output["authors"])
+  print(output["authors"]) #pyright: ignore
   print("")
   
   

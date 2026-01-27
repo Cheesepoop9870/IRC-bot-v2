@@ -15,22 +15,25 @@ import gc
 from local_googlesearch_python import search
 from youtube_search import YoutubeSearch as ytsearch 
 from search_ai import search as searchai
+
+
+
 # from pastebin import PastebinAPI
 #for infinite rolls
 #remove this maybe
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
 #note: add !pingall message availibility
-log.VERBOSE = 15
+log.VERBOSE = 15 # pyright: ignore[reportAttributeAccessIssue]
 
 # 2. Associate the name with the level
-log.addLevelName(log.VERBOSE, "VERBOSE")
+log.addLevelName(log.VERBOSE, "VERBOSE") # pyright: ignore[reportAttributeAccessIssue]
 
 # 3. Add a convenience method (optional)
 def verbose(self, message, *args, **kwargs):
-    if self.isEnabledFor(log.VERBOSE):
-        self._log(log.VERBOSE, message, args, **kwargs)
+    if self.isEnabledFor(log.VERBOSE): # pyright: ignore[reportAttributeAccessIssue]
+        self._log(log.VERBOSE, message, args, **kwargs) # pyright: ignore[reportAttributeAccessIssue]
 
-log.Logger.verbose = verbose
+log.Logger.verbose = verbose # pyright: ignore[reportAttributeAccessIssue]
 #logging stuff
 log.basicConfig(
     level=log.INFO,  
@@ -41,7 +44,7 @@ log.basicConfig(
 )
 log2 = log.getLogger(__name__)
 log.debug("started")
-log2.verbose("test")
+log2.verbose("test") # pyright: ignore[reportAttributeAccessIssue]
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870, #Facility36'
 # channel_debug = ""
@@ -384,9 +387,9 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             output = crom.wikisearch(" ".join(args))
             debug(0, output)
             authors = []
-            for x in range(0, len(output["authors"])): #cycles through authors
+            for x in range(0, len(output["authors"])):  #pyright: ignore #cycles through authors
                 
-                authors.append(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #adds to list
+                authors.append(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #pyright: ignore #adds to list
                 debug(f"1|{x}", authors)
             debug(1.5, authors)
             if authors:
@@ -394,14 +397,14 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
 
             else: #attmeta fail 
               authors = []
-              for x in range(0, len(output["authors2"])): #uses backup list
-                authors.append(dict(output["authors2"][x])["user"]["name"])
+              for x in range(0, len(output["authors2"])): #pyright: ignore #uses backup list
+                authors.append(dict(output["authors2"][x])["user"]["name"]) #pyright: ignore
                 debug(f"2|{x}", authors)
-            if output["title2"] == []: #no alt title
-                send_message(channel_debug, f'{sender}: {output["title"]}: ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
+            if output["title2"] == []: #pyright: ignore #no alt title
+                send_message(channel_debug, f'{sender}: {output["title"]}: ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}') #pyright: ignore
                 
             else:    
-                send_message(channel_debug, f'{sender}: {output["title"]}: {output["title2"][0]["title"]} ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
+                send_message(channel_debug, f'{sender}: {output["title"]}: {output["title2"][0]["title"]} ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}') #pyright: ignore
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
             log.warning(f'{sender} tried to use the search command in channel {channel_debug} but got no results')
@@ -456,10 +459,10 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 output = crom.ausearch(" ".join(args)) 
             #name, rank, mean rating, total rating, page count, scp count, tale count, goi count, artwork count, author page url, author page title, last page url, last page title, last page rating
             #note: errors wont cause a problem
-            if output["authorPageUrl"] != "":
-                send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+            if output["authorPageUrl"] != "": #pyright: ignore
+                send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}") #pyright: ignore
             else:
-                send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+                send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountScp']} SCPs, {output['pageCountTale']} Tales, {output['pageCountGoiFormat']} GOI formats, {output['pageCountArtwork']} Artworks, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}") #pyright: ignore
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
             log.warning(f'{sender} tried to use the author command in channel {channel_debug} but got no results')
@@ -500,6 +503,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         #add db.py commands here too
     elif command == "irc":
         send_message(channel_debug, f'{sender}: https://www.rfc-editor.org/rfc/rfc1459.html')
+        send_message(channel_debug, f'{sender}: https://ircv3.net/irc/')
 
     elif command == "youtube" or command == "yt" or command == "y":
         results = ytsearch(' '.join(args), 1).to_json()
@@ -517,10 +521,10 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         try:
             output = crom.br_ausearch(" ".join(args)) 
             #note: errors wont cause a problem
-            if output["authorPageUrl"] != "":
-                send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+            if output["authorPageUrl"] != "":#pyright: ignore
+                send_message(channel_debug, f"{sender}: {output['name']} ({output['authorPageTitle']} - {output['authorPageUrl']}) has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}") #pyright: ignore
             else:
-                send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}")
+                send_message(channel_debug, f"{sender}: {output['name']} has {output['pageCount']} pages ({output['pageCountLevel']} Levels, {output['pageCountEntity']} Entities, {output['pageCountObject']} Objects, and {output['pageCountOther']} others) with a total rating of {output['totalRating']} and an average rating of {output['meanRating']}. Their latest page is {output['lastPageTitle']} with a rating of {output['lastPageRating']} - {output['lastPageUrl']}") #pyright: ignore
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
             log.warning(f'{sender} tried to use the brauthor command in channel {channel_debug} but got no results')
@@ -536,16 +540,16 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             output3 = []
             debug(0, output)
             #note: errors wont cause a poblem
-            if output["title2"] == []: #no alt title
-                output["title2"] = ""
-                output["title"] = f"{output['title']},"
+            if output["title2"] == []: #pyright: ignore #no alt title
+                output["title2"] = "" #pyright: ignore
+                output["title"] = f"{output['title']}," #pyright: ignore
             else:
-                output["title"] = f"{output['title']}:"
-                output_str = dict(output["title2"][0])["title"]
+                output["title"] = f"{output['title']}:"#pyright: ignore
+                output_str = dict(output["title2"][0])["title"]#pyright: ignore
                 output_str = f"{output_str},"
-            for x in range(0, len(output["authors"])):
-                output3.append(dict(output["authors"][x])["user"]["name"])
-            send_message(channel_debug, f"{sender}: {output['title']} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+            for x in range(0, len(output["authors"])):#pyright: ignore
+                output3.append(dict(output["authors"][x])["user"]["name"])#pyright: ignore
+            send_message(channel_debug, f"{sender}: {output['title']} #pyright: ignore({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")#pyright: ignore
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
             log.warning(f'{sender} tried to use the brsearch command in channel {channel_debug} but got no results')
@@ -576,7 +580,7 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         # check crom
         output = requests.get("https://api.crom.avn.sh")
         # ignore the error
-        if crom.wikisearch("SCP-049")["title"] == "SCP-049":
+        if crom.wikisearch("SCP-049")["title"] == "SCP-049":#pyright: ignore
             send_message(channel_debug, f'{sender}: confirmed connection with Crom API ({output.status_code})')
             log.info(f'{sender} confirmed connection with Crom API ({output.status_code})')
         else:
@@ -845,7 +849,7 @@ if __name__ == "__main__":
                     log.info("History clear")
 
             # Check for PRIVMSG (chat messages) - AFTER history bypass check
-            log2.verbose(f"Received message: {line}")
+            log2.verbose(f"Received message: {line}") # pyright: ignore[reportAttributeAccessIssue]
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
                 sender = line.split('!')[0][1:]
