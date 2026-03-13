@@ -757,7 +757,9 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the cromcheck_author command in channel {channel_debug}')
-
+    elif command == "test":
+        handle.write(f'PRIVMSG {channel_debug} :\x01ACTION combusts\x01\r\n')
+        handle.flush()
             
             
     
