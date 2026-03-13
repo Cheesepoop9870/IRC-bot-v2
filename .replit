@@ -3,6 +3,7 @@ modules = ["nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["git-filter-repo", "gnupg"]
 
 [unitTest]
 language = "python3"
