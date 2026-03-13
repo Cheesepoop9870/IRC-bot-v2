@@ -10,6 +10,7 @@ import base64
 import json
 import logging as log
 import pastebin2
+import gc
 from local_googlesearch_python import search
 from youtube_search import YoutubeSearch as ytsearch 
 
@@ -18,7 +19,17 @@ from youtube_search import YoutubeSearch as ytsearch
 #remove this maybe
 infindex = ["pi", "e", "inf", "infinity", "tau", "phi", "euler", "catalan", "glaisher", "sqrt(2)", "sqrt(3)", "sqrt(5)", "sqrt(7)", "sqrt(11)", "sqrt(13)", "sqrt(17)", "sqrt(19)", "sqrt(23)", "sqrt(29)", "sqrt(31)", "sqrt(37)", "sqrt(41)", "sqrt(43)", "Fall out Boy", "bleventeen", "Gravity Falls", "Adventure Time", "Steven Universe", "Rick and Morty", "The Simpsons", "The Office", "Probabilitor", "*", "/", "+", "-", "=", ">", "<", "!", "?", "@", "#", "$", "%", "^", "&",  "(", ")", "_", "-", "+", "=", "[", "]", "{", "}",  "pyscp", "SCP-033", "SCP-055" "SCP-035", "SCP-049", "SCP-076", "SCP-096", "SCP-173", "SCP-294", "reddit", "youtube", "twitch", "twitter", "facebook", "instagram", "tiktok", "snapchat", "discord", "telegram", "whatsapp", "skype", "zoom", "minecraft", "IRC", "#IRC!", "#facility36", "LetsGameItOut", "SCP-3125", "numpy", "qwerty", "asdfghjkl", "zxcvbnm", "1234567890", "python", "java", "c++", "c#", "javascript", "html", "css", "php", "sql", "ruby", "swift", "kotlin", "go", "rust", "typescript", "dart","english", "spanish", "french", "german", "italian", "portuguese", "dutch", "russian", "chinese", "japanese", "korean", "arabic","fnaf", "minecraft", "fortnite", "apex legends", "call of duty", "battlefield", "overwatch", "rainbow six", "valorant", "csgo", "hydrogen", "helium", "lithium", "beryllium", "boron", "carbon", "nitrogen", "oxygen", "fluorine", "neon", "sodium", "magnesium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "argon", "potassium", "calcium", "scandium", "titanium", "vanadium", "chromium","manganese", "iron", "cobalt", "nickel", "copper", "zinc", "gallium", "germanium", "arsenic", "selenium", "bromine","krypton", "rubidium", "strontium", "yttrium", "zirconium", "niobium", "molybdenum", "technetium", "ruthenium", "rhodium","palladium", "silver", "cadmium", "indium", "tin", "antimony", "tellurium", "iodine", "xenon", "cesium", "barium","lanthanum", "cerium", "praseodymium", "neodymium", "promethium", "samarium", "europium", "gadolinium", "terbium","dysprosium", "holmium", "erbium", "thulium", "ytterbium", "lutetium", "hafnium", "tantalum", "tungsten", "rhenium","osmium", "iridium", "platinum", "gold", "mercury", "thallium", "lead", "bismuth", "polonium", "astatine", "radon","francium","radium", "actinium", "thorium", "protactinium", "uranium", "neptunium", "plutonium", "americium", "curium","berkelium", "californium" "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium", "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium", "meitnerium", "darmstadtium", "roentgenium", "copernicium", "nihonium", "flerovium", "moscovium", "livermorium","tennessine", "oganesson",]
 #note: add !pingall message availibility
+log.VERBOSE = 15
 
+# 2. Associate the name with the level
+log.addLevelName(log.VERBOSE, "VERBOSE")
+
+# 3. Add a convenience method (optional)
+def verbose(self, message, *args, **kwargs):
+    if self.isEnabledFor(log.VERBOSE):
+        self._log(log.VERBOSE, message, args, **kwargs)
+
+log.Logger.verbose = verbose
 #logging stuff
 log.basicConfig(
     level=log.INFO,  
@@ -27,8 +38,9 @@ log.basicConfig(
     filemode='w',         # Append to the file (default is 'a', 'w' for overwrite)
     datefmt='%H:%M:%S',
 )
-
+log2 = log.getLogger(__name__)
 log.debug("started")
+log2.verbose("test")
 server = 'irc.scpwiki.com'
 channel = '#cheesepoop9870, #Facility36'
 # channel_debug = ""
@@ -44,6 +56,8 @@ ADMIN_USERS = {'cheesepoop9870', "PineappleOnPizza", "cheesepoop9870_", "Kiro", 
 ADMIN_USER_REGEX = {r"(\w+!)?(uid692117|thewXord987)@(stalking\.your\.sandbox|my\.poop\.is\.cheese|illegal\.food\.combo)$", r"(\w*!)?(uid536230)@(the\.queen\.of\.(the\.)?foxes)$", r"(\w+!)?(Felds)@(the\.amyrlin\.seat|site19\.isnt\.real\.cant\.hurt\.you)$", r"(\w+!)?(uid714194|Magnileak)@(SCP-f5eupe\.tinside\.irccloud\.com|SCP-kin\.6dp\.29\.161\.IP|SCP-phc\.lrc\.149\.118\.IP|SCP-go5\.s65\.149\.118\.IP)$", r"(.+!)?[kK]ufat@SkipIRC\.admin$"} #kuf is here as a backup
 debug_flag = 0 # 0 = off, 1 = on | SHOULD BE 0 WHEN NOT IN DEBUG MODE
 latest_range = 3 # 3 = 3 results, 5 = 5 results, etc. | MAX 5
+
+disable_google = 1 # 0 = google works, 1 = google is disabled
 
 
 def handle_command(command, args, handle, sender, channel_debug, full_host=None):
@@ -218,71 +232,83 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
             send_message(channel_debug, 'Sorry, you are not authorized to use this command.     Action logged.')
             log.warning(f'{sender} tried to use the leave command in channel {channel_debug}')
     elif command == "google" or command == "g":
-        #note: ADD SPACE BETWEEN URL AND TITLE
-        debug(-1, list(search(args, num_results=2)))
-        debug(-1.5, bool(list(search(args, num_results=1))[0]))
-        debug(0, bool(list(search(args, num_results=1))[0]))
-        if not bool(list(search(args, num_results=1))[0]) or "/search?" in str(list(search(args, num_results=1))[0]): # false, 1st result contains no results/404
-            output = list(search(args, num_results=2, advanced=True))
-            debug(1, output)
-            output = str(output[1]).split("(", 1)
-            debug(2, output)
-            output.pop(0) # Remove the first element
-            debug(3, output)
-            output2 = str(output[0]).split("title=")
-            debug(4, output2)
-            output2.pop(0) # Remove the first element
-            debug(5, output2)
-            output = output2
-            debug(6, output)
-            output_str = "".join(output)
-            debug(7, output_str)
-            output2 = output_str.split("title")
-            debug(8, output2)
-            output_str = " | ".join(output)
-            debug(9, output_str)
-            output_str = output_str[0:len(output_str)-2]
-            #404 check
-            if ", title | , description |" in output_str or "/search?" in output_str:
-              send_message(channel_debug, f'{sender}: No results found!')
-              log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got no results')
-            else:
-              send_message(channel_debug, f'{sender}: {output_str}')
-        elif bool(list(search(args, num_results=1))[0]): # true, first result contains a 404 or error
-            log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got a 404 or error on first result')
+        global disable_google
+        if disable_google == 1:
+            send_message(channel_debug, f'{sender}: Google is disabled. Tell cheese if you think this is a mistake. For more info see github.com/Cheesepoop9870/IRC-bot-v2/issues/24')
+            log.warning(f'{sender} tried to use the google command in channel {channel_debug} but google is disabled')
+            return
+        else:
             try:
-                output = list(search(args, num_results=1, advanced=True))
-                debug(1, output)
-                output = str(output[0]).split("(", 1)
-                debug(2, output)
-                output.pop(0) # Remove the first element
-                debug(3, output)
-                output = re.split(r"url=|title=|description=" ,str(output[0]))
-                debug(4, output)
-                output.pop(0) # Remove the first element
-                debug(5, output)
-                output2 = output[0].split(",")
-                debug(6, output2)
-                output2.pop(1) # Remove the second element
-                debug(7, output2)
-                output.pop(0) #Replace the first element
-                debug(8, output)
-                output.insert(0, output2[0]) #^
-                debug(9, output)
-                output_str = " | ".join(output)
-                debug(10, output_str)
-                output = output_str.split(",")
-                #do same thing as above
-                if ", title | , description |" in output_str or "/search?" in output_str:
-                  send_message(channel_debug, f'{sender}: Error!')
+                #note: ADD SPACE BETWEEN URL AND TITLE
+                debug(-4, " ".join(args))
+                debug(-3, list(search("hi", num_results=2)))
+                debug(-2, search(" ".join(args), num_results=1))
+                debug(-1, list(search(" ".join(args), num_results=2)))
+                debug(-1.5, bool(list(search(" ".join(args), num_results=1))[0]))
+                debug(0, bool(list(search(" ".join(args), num_results=1))[0]))
+                if not bool(list(search(" ".join(args), num_results=1))[0]) or "/search?" in str(list(search(args, num_results=1))[0]): # false, 1st result contains no results/404
+                    output = list(search(" ".join(args), num_results=2, advanced=True))
+                    debug(1, output)
+                    output = str(output[1]).split("(", 1)
+                    debug(2, output)
+                    output.pop(0) # Remove the first element
+                    debug(3, output)
+                    output2 = str(output[0]).split("title=")
+                    debug(4, output2)
+                    output2.pop(0) # Remove the first element
+                    debug(5, output2)
+                    output = output2
+                    debug(6, output)
+                    output_str = "".join(output)
+                    debug(7, output_str)
+                    output2 = output_str.split("title")
+                    debug(8, output2)
+                    output_str = " | ".join(output)
+                    debug(9, output_str)
+                    output_str = output_str[0:len(output_str)-2]
+                    #404 check
+                    if ", title | , description |" in output_str or "/search?" in output_str:
+                      send_message(channel_debug, f'{sender}: No results found!')
+                      log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got no results')
+                    else:
+                      send_message(channel_debug, f'{sender}: {output_str}')
+                elif bool(list(search(" ".join(args), num_results=1))[0]): # true, first result contains a 404 or error
+                    log.warning(f'{sender} tried to use the google command in channel {channel_debug} but got a 404 or error on first result')
+                    try:
+                        output = list(search(" ".join(args), num_results=1, advanced=True))
+                        debug(1, output)
+                        output = str(output[0]).split("(", 1)
+                        debug(2, output)
+                        output.pop(0) # Remove the first element
+                        debug(3, output)
+                        output = re.split(r"url=|title=|description=" ,str(output[0]))
+                        debug(4, output)
+                        output.pop(0) # Remove the first element
+                        debug(5, output)
+                        output2 = output[0].split(",")
+                        debug(6, output2)
+                        output2.pop(1) # Remove the second element
+                        debug(7, output2)
+                        output.pop(0) #Replace the first element
+                        debug(8, output)
+                        output.insert(0, output2[0]) #^
+                        debug(9, output)
+                        output_str = " | ".join(output)
+                        debug(10, output_str)
+                        output = output_str.split(",")
+                        #do same thing as above
+                        if ", title | , description |" in output_str or "/search?" in output_str:
+                          send_message(channel_debug, f'{sender}: Error!')
+                        else:
+                          send_message(channel_debug, f"{sender}: {output_str[0:len(output_str)-2]}")
+                    except Exception as e:
+                        send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
+                        log.exception(f"Error: {e}")
                 else:
-                  send_message(channel_debug, f"{sender}: {output_str[0:len(output_str)-2]}")
+                    send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
+                    log.error("Error! google command failed")
             except Exception as e:
                 send_message(channel_debug, f'Error! if this happenes, tell cheese. Error string: {e}')
-                log.exception(f"Error: {e}")
-        else:
-            send_message(channel_debug, 'Error! if this happens, tell cheese. Error string 424')
-            log.error("Error! google command failed")
     elif command == "!flags":
         if args[0] == "set":
             if args[1] == "debug":
@@ -332,6 +358,14 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
                 else:
                     send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
                     log.warning(f'{sender} tried to use the cache command in channel {channel_debug}')
+            elif args[1] == "google":
+                if checkperms(full_host, sender):
+                    
+                    disable_google = disable_google + 1
+                    if disable_google > 1:
+                        disable_google = 0
+                    send_message(channel_debug, f'Google disabled = {disable_google}')
+                    log.info(f'Google disabled set to {disable_google} by {sender} in channel {channel_debug}')
         elif args[0] == "get":
             if args[1] == "debug":
                 send_message(channel_debug, f'Debug mode = {debug_flag}')
@@ -343,41 +377,33 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
     elif command == "search" or command == "s":
         try:
             output = crom.wikisearch(" ".join(args))
-            output2 = ""
-            output3 = []
-            output4 = []
-            output4.append(output["rating"].split("(")[0])
-            output4.append(output["rating"].split("(")[1][0:len(output["rating"].split("(")[1])-1])
-            output4.append(output4[1].split("/")[0].strip("+"))
-            output4.append(output4[1].split("/")[1].strip("-"))
-            output4.append(int(output4[2]) + int(output4[3]))
-            output4.append(int(output4[2])/int(output4[4]))
-            output4.append("")
-            output4[5] = f"{output4[5]:.2%}"
-            output4.pop(6)
             debug(0, output)
-            debug(1, output4)
-            debug(2, output4[5])
+            authors = []
+            for x in range(0, len(output["authors"])): #cycles through authors
+                
+                authors.append(dict(output["authors"][x])["user"]["name"]) if output["authors"][x]["isCurrent"] else None #adds to list
+                debug(f"1|{x}", authors)
+            debug(1.5, authors)
+            if authors:
+                pass
 
-            #note: errors wont cause a poblem
+            else: #attmeta fail 
+              authors = []
+              for x in range(0, len(output["authors2"])): #uses backup list
+                authors.append(dict(output["authors2"][x])["user"]["name"])
+                debug(f"2|{x}", authors)
             if output["title2"] == []: #no alt title
-                output["title2"] = ""
-                output["title"] = f"{output['title']},"
-            else:
-                output["title"] = f"{output['title']}:"
-                output_str = dict(output["title2"][0])["title"]
-                output_str = f"{output_str},"
-            for x in range(0, len(output["authors"])):
-                output3.append(dict(output["authors"][x])["user"]["name"])
-            send_message(channel_debug, f"{sender}: {output['title']} {output_str} ({output['rating']}, written on {output['createdAt']} by {', '.join(output3)} with {output['comments']} comments) - {output['url']}")
+                send_message(channel_debug, f'{sender}: {output["title"]}: ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
+                
+            else:    
+                send_message(channel_debug, f'{sender}: {output["title"]}: {output["title2"][0]["title"]} ({output["rating"]}, written on {output["createdAt"].replace("T"," ")} by {", ".join(authors)} with {output["comments"]} comments) - {output["url"]}')
         except IndexError:
             send_message(channel_debug, f'{sender}: No results found!')
             log.warning(f'{sender} tried to use the search command in channel {channel_debug} but got no results')
             return
         except Exception as e:
-            send_message(channel_debug, f'{sender}: Error! String: {e}')
             log.exception(f"Error: {e}")
-
+            send_message(channel_debug, f'{sender}: Error: {e}')
     elif command == "raw":
 
         if checkperms(full_host, sender):
@@ -663,6 +689,33 @@ def handle_command(command, args, handle, sender, channel_debug, full_host=None)
         else:
             send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
             log.warning(f'{sender} tried to use the ban command in channel {channel_debug}')
+    elif command == "ramclear":
+        if checkperms(full_host, sender):
+            gc.collect()
+            send_message(channel_debug, f'{sender}: RAM cleared')
+            log.info(f'{sender} cleared RAM in channel {channel_debug}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the ramclear command in channel {channel_debug}')
+    elif command == "!cromcheck_search":
+        if checkperms(full_host, sender):
+            output = crom.get_json_serach(" ".join(args))
+            send_message(channel_debug, f'{sender}: {output}')
+            log.info(f'{sender} used the cromcheck_search command in channel {channel_debug}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the cromcheck_search command in channel {channel_debug}')
+    elif command == "!cromcheck_author":
+        if checkperms(full_host, sender):
+            output = crom.get_json_author(" ".join(args))
+            send_message(channel_debug, f'{sender}: {output}')
+            log.info(f'{sender} used the cromcheck_author command in channel {channel_debug}')
+        else:
+            send_message(channel_debug, 'Sorry, you are not authorized to use this command. Action logged.')
+            log.warning(f'{sender} tried to use the cromcheck_author command in channel {channel_debug}')
+
+            
+            
     
 ##################################################################################
 ##################################################################################
@@ -752,7 +805,7 @@ if __name__ == "__main__":
                     log.info("History clear")
 
             # Check for PRIVMSG (chat messages) - AFTER history bypass check
-            log.debug(f"Received message: {line}")
+            log2.verbose(f"Received message: {line}")
             if "PRIVMSG" in line and ':!' in line:
                 # Extract the sender's nickname
                 sender = line.split('!')[0][1:]
@@ -781,9 +834,9 @@ if __name__ == "__main__":
         # break
     finally:
         try:
-            sys.exit(1)
+            sys.exit()
             
         except Exception as e:
-            log.critical(f"Error: sys.exit(1) failed: {e}")
+            log.critical(f"Error: sys.exit() failed: {e}")
             pass
 # HIDE PASSWORD
