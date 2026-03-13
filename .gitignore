@@ -1,0 +1,7 @@
+.replit
+backup2/
+main/
+__pycache__/
+*.pyc
+*.log
+*.db
